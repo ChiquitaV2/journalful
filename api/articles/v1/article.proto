@@ -1,0 +1,92 @@
+syntax = "proto3";
+
+package api.articles.v1;
+
+import "google/protobuf/timestamp.proto";
+
+import "profile/v1/author.proto";
+
+option go_package = "github.com/chiquitav2/journalful/pkg/articles/v1;article";
+
+message Article {
+  int64 id = 1;
+  string doi = 2;
+  string title = 3;
+  repeated profile.v1.Author authors = 4; // List of authors
+  optional string abstract = 5;
+  optional int32 publication_year = 6;
+  optional string journal_name = 7;
+  google.protobuf.Timestamp created_at = 8;
+  google.protobuf.Timestamp updated_at = 9;
+}
+
+service ArticlesService {
+  rpc GetArticle(GetArticleRequest) returns (GetArticleResponse);
+  rpc GetArticleByDOI(GetArticleByDOIRequest) returns (GetArticleByDOIResponse);
+  rpc ListArticles(ListArticlesRequest) returns (ListArticlesResponse);
+  rpc CreateArticle(CreateArticleRequest) returns (CreateArticleResponse);
+  rpc UpdateArticle(UpdateArticleRequest) returns (UpdateArticleResponse);
+  rpc DeleteArticle(DeleteArticleRequest) returns (DeleteArticleResponse);
+}
+    
+
+message GetArticleRequest {
+  int64 id = 1;
+}
+
+message GetArticleResponse {
+  Article article = 1;
+}
+
+message GetArticleByDOIRequest {
+  string doi = 1;
+}
+
+message GetArticleByDOIResponse {
+  Article article = 1;
+}
+
+message ListArticlesRequest {
+  optional int32 page = 1; // Page number for pagination
+  optional int32 page_size = 2; // Number of articles per page
+}
+
+message ListArticlesResponse {
+  repeated Article articles = 1;
+}
+
+message CreateArticleRequest {
+  string doi = 1;
+  string title = 2;
+  repeated profile.v1.Author authors = 4; // List of authors
+  optional string abstract = 5;
+  optional int32 publication_year = 6;
+  optional string journal_name = 7;
+}
+
+message CreateArticleResponse {
+  int64 id = 1; // ID of the newly created article
+}
+
+message UpdateArticleRequest {
+  int64 id = 1;
+  string doi = 2;
+  string title = 3;
+  optional string abstract = 4;
+  optional int32 publication_year = 5;
+  optional string journal_name = 6;
+}
+
+message UpdateArticleResponse {
+  // Empty response indicating success
+}
+
+message DeleteArticleRequest {
+  int64 id = 1;
+}
+
+message DeleteArticleResponse {
+  // Empty response indicating success
+}
+
+

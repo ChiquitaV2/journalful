@@ -1,0 +1,17 @@
+
+services:
+  database:
+    image: mariadb
+    container_name: journalful_db
+    environment:
+      MYSQL_ROOT_PASSWORD: root # obviously change this in production and use a vault
+      MYSQL_DATABASE: journalful
+      MYSQL_USER: service
+      MYSQL_PASSWORD: service_password
+    ports:
+        - "3306:3306"
+    volumes:
+        - db_data:/var/lib/mysql
+
+volumes:
+  db_data:

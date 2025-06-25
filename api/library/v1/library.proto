@@ -1,0 +1,60 @@
+syntax = "proto3";
+
+package api.library.v1;
+
+import "google/protobuf/timestamp.proto";
+
+option go_package = "github.com/chiquitav2/journalful/pkg/library/v1;library";
+
+service LibraryService {
+  rpc SaveArticleToLibrary(SaveArticleToLibraryRequest) returns (SaveArticleToLibraryResponse);
+//  rpc UpdateSavedArticle(UpdateSavedArticleRequest) returns (UpdateSavedArticleResponse);
+//  rpc DeleteSavedArticle(DeleteSavedArticleRequest) returns (DeleteSavedArticleResponse);
+  rpc GetUserLibrary(GetUserLibraryRequest) returns (GetUserLibraryResponse);
+}
+
+enum ReadingStatus {
+  READING_STATUS_UNSPECIFIED = 0;
+  READING_STATUS_TO_READ = 1;
+  READING_STATUS_READING = 2;
+  READING_STATUS_READ = 3;
+  READING_STATUS_ABANDONED = 4;
+}
+
+message Library {
+  int64 id = 1;
+  int64 profile_id = 2;
+  optional string name = 3;
+  repeated SavedArticle saved_articles = 4;
+  google.protobuf.Timestamp created_at = 5;
+  google.protobuf.Timestamp updated_at = 6;
+}
+
+message SavedArticle {
+  int64 id = 1;
+  int64 library_id = 2;
+  int64 article_id = 3;
+  ReadingStatus reading_status = 4;
+  google.protobuf.Timestamp added_at = 5;
+  optional string notes = 6;
+  google.protobuf.Timestamp created_at = 7;
+  google.protobuf.Timestamp updated_at = 8;
+}
+
+message SaveArticleToLibraryRequest {
+  string user_id = 1;
+  string article_id = 2;
+  ReadingStatus reading_status = 3;
+}
+
+message SaveArticleToLibraryResponse {
+  string user_id = 1;
+  string article_id = 2;
+}
+
+message GetUserLibraryRequest {
+  string user_id = 1;
+}
+message GetUserLibraryResponse {
+  repeated SavedArticle saved_articles = 1;
+}

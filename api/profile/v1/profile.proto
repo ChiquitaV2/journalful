@@ -1,0 +1,69 @@
+syntax = "proto3";
+
+package api.profile.v1;
+
+import "google/protobuf/timestamp.proto";
+
+option go_package = "github.com/chiquitav2/journalful/pkg/profile/v1;profile";
+
+message Profile {
+  int64 id = 1;
+  string name = 2;
+  optional string bio = 3;
+  optional string institution = 4;
+  google.protobuf.Timestamp created_at = 5;
+  google.protobuf.Timestamp updated_at = 6;
+}
+
+service ProfileService {
+  rpc GetProfile(GetProfileRequest) returns (GetProfileResponse);
+}
+
+message GetProfileRequest {
+  int64 id = 1;
+}
+
+message GetProfileResponse {
+  Profile profile = 1;
+}
+
+message ListProfilesRequest {
+  int32 page = 1;
+  int32 page_size = 2;
+}
+
+message ListProfilesResponse {
+  repeated Profile profiles = 1;
+  int32 total_count = 2;
+}
+
+message CreateProfileRequest {
+  string name = 1;
+  optional string bio = 2;
+  optional string institution = 3;
+}
+
+message CreateProfileResponse {
+  int64 id = 1;
+}
+
+message UpdateProfileRequest {
+  int64 id = 1;
+  optional string name = 2;
+  optional string bio = 3;
+  optional string institution = 4;
+}
+
+message UpdateProfileResponse {
+
+}
+
+message DeleteProfileRequest {
+  int64 id = 1;
+}
+
+message DeleteProfileResponse {
+
+}
+
+

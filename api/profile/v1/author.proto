@@ -1,0 +1,75 @@
+syntax = "proto3";
+
+package api.profile.v1;
+
+import "google/protobuf/timestamp.proto";
+
+option go_package = "github.com/chiquitav2/journalful/pkg/profile/v1;profile";
+
+message Author {
+  int64 id = 1;
+  string name = 2;
+  optional int64 profile_id = 3;
+  google.protobuf.Timestamp created_at = 4;
+  google.protobuf.Timestamp updated_at = 5;
+}
+
+service AuthorService {
+  rpc GetAuthor(GetAuthorRequest) returns (GetAuthorResponse);
+  rpc GetAuthorByProfileID(GetAuthorByProfileIDRequest) returns (GetAuthorByProfileIDResponse);
+  rpc ListAuthors(ListAuthorsRequest) returns (ListAuthorsResponse);
+  rpc CreateAuthor(CreateAuthorRequest) returns (CreateAuthorResponse);
+  rpc UpdateAuthor(UpdateAuthorRequest) returns (UpdateAuthorResponse);
+  rpc DeleteAuthor(DeleteAuthorRequest) returns (DeleteAuthorResponse);
+}
+
+message GetAuthorRequest {
+  int64 id = 1;
+}
+
+message GetAuthorResponse {
+  Author author = 1;
+}
+
+message GetAuthorByProfileIDRequest {
+  int64 profile_id = 1;
+}
+
+message GetAuthorByProfileIDResponse {
+  Author author = 1;
+}
+
+message ListAuthorsRequest {
+  // Add pagination or filters here
+}
+
+message ListAuthorsResponse {
+  repeated Author authors = 1;
+}
+
+message CreateAuthorRequest {
+  string name = 1;
+  optional int64 profile_id = 2;
+}
+
+message CreateAuthorResponse {
+  int64 id = 1; // ID of the newly created author
+}
+
+message UpdateAuthorRequest {
+  int64 id = 1;
+  string name = 2;
+  optional int64 profile_id = 3;
+}
+
+message UpdateAuthorResponse {
+  // Empty response indicating success
+}
+
+message DeleteAuthorRequest {
+  int64 id = 1;
+}
+
+message DeleteAuthorResponse {
+  // Empty response indicating success
+}
