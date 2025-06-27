@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"github.com/chiquitav2/journalful/internal/api"
 	"github.com/chiquitav2/journalful/internal/api/grpc"
+	"github.com/chiquitav2/journalful/pkg/conf"
 	_ "github.com/go-sql-driver/mysql"
 	"log/slog"
 )
@@ -13,15 +14,18 @@ import (
 type App struct {
 	grpcApi api.ApiModule
 	db      *sql.DB
+	config  *conf.Config
 }
 
-func NewApp() *App {
-	return &App{}
+func NewApp(config *conf.Config) *App {
+	return &App{
+		config: config,
+	}
 }
 func (s *App) Init() error {
 	slog.Info("App initialized")
 	// Initialize the database connection
-	s.db = connectDB()
+	s.db = connectDB(s.config.Database)
 	// load the database schema from the embedded schema
 	if s.db == nil {
 		slog.Error("Database connection is nil, cannot proceed with initialization")
@@ -33,7 +37,7 @@ func (s *App) Init() error {
 	// Start the gRPC server here
 	// This is a placeholder for actual server start logic
 	if err := s.grpcApi.Register(); err != nil {
-		slog.Error("Failed to register gRPC API: %v", err)
+		slog.Error("Failed to register gRPC API", "error", err)
 		return err
 	}
 	return nil
@@ -45,7 +49,7 @@ func (s *App) Start() {
 	// Example: http.ListenAndServe(":8080", nil)
 	// This is a placeholder; actual server logic would go here
 	if err := s.grpcApi.Start(); err != nil {
-		slog.Error("Failed to start gRPC API: %v", err)
+		slog.Error("Failed to start gRPC API", "error", err)
 	} else {
 		slog.Info("gRPC API started successfully")
 	}
@@ -55,7 +59,7 @@ func (s *App) Stop() {
 	// Clean up resources here
 	if s.db != nil {
 		if err := s.db.Close(); err != nil {
-			slog.Error("Failed to close database connection: %v", err)
+			slog.Error("Failed to close database connection", "error", err)
 		} else {
 			slog.Info("Database connection closed successfully")
 		}
@@ -63,16 +67,16 @@ func (s *App) Stop() {
 	slog.Info("App stopped")
 }
 
-func connectDB() *sql.DB {
+func connectDB(dbConfig conf.DatabaseConfig) *sql.DB {
 	connectionString := fmt.Sprintf("%s:%s@tcp(%s:%s)/%s?parseTime=true",
-		"service", "service_password", "localhost", "3306", "journalful")
+		dbConfig.User, dbConfig.Password, dbConfig.Host, dbConfig.Port, dbConfig.Name)
 	db, err := sql.Open("mysql", connectionString)
 	if err != nil {
-		slog.Error("Failed to connect to database: %v", err)
+		slog.Error("Failed to connect to database", "error", err)
 		return nil
 	}
 	if err = db.Ping(); err != nil {
-		slog.Error("Failed to ping database: %v", err)
+		slog.Error("Failed to ping database", "error", err)
 		return nil
 	}
 	slog.Info("Connected to database successfully")

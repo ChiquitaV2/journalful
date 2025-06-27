@@ -1,5 +1,19 @@
-
 services:
+  traefik:
+    image: traefik:latest
+    container_name: journalful_traefik
+    command:
+      - "--api.insecure=true"
+      - "--providers.docker=true"
+      - "--providers.docker.exposedbydefault=false"
+      - "--entrypoints.web.address=:80"
+    ports:
+      - "80:80"
+      - "443:443"
+      - "8080:8080"
+    volumes:
+      - "/var/run/docker.sock:/var/run/docker.sock"
+
   database:
     image: mariadb
     container_name: journalful_db
@@ -12,6 +26,26 @@ services:
         - "3306:3306"
     volumes:
         - db_data:/var/lib/mysql
+
+  backend:
+    build: ../..
+    depends_on:
+      - database
+    environment:
+      SERVER_HOST: localhost
+      SERVER_PORT: 50051
+      DB_HOST: journalful_db
+      DB_PORT: 3306
+      DB_USER: service
+      DB_PASSWORD: service_password
+      DB_NAME: journalful
+    ports:
+      - "50051:50051"
+    labels:
+      traefik.enable: "true"
+      traefik.http.routers.backend.entrypoints: "web"
+      traefik.http.services.backend.loadbalancer.server.port: "80"
+      traefik.http.services.backend.loadbalancer.server.scheme: "h2c"
 
 volumes:
   db_data:
