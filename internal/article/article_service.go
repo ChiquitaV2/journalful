@@ -14,16 +14,23 @@ import (
 
 type ArticleGrpcService struct {
 	article.UnimplementedArticlesServiceServer
-	authorRepo profile.ProfileRepository
-	query      *db.Queries
+	authorRepo  profile.Repository
+	articleRepo *db.Queries
 }
 
-func (s ArticleGrpcService) GetArticle(ctx context.Context, request *article.GetArticleRequest) (*article.GetArticleResponse, error) {
+func NewArticleGrpcService(conn *sql.DB) *ArticleGrpcService {
+	return &ArticleGrpcService{
+		authorRepo:  profile.NewProfileRepository(conn),
+		articleRepo: db.New(conn),
+	}
+}
+
+func (s *ArticleGrpcService) GetArticle(ctx context.Context, request *article.GetArticleRequest) (*article.GetArticleResponse, error) {
 	if request == nil || request.Id == 0 {
 		return nil, fmt.Errorf("invalid request: %v", request)
 	}
 	// Fetch the article from the database
-	articleData, err := s.query.GetArticle(ctx, request.Id)
+	articleData, err := s.articleRepo.GetArticle(ctx, request.Id)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			slog.Warn("article not found", "id", request.Id)
@@ -33,7 +40,7 @@ func (s ArticleGrpcService) GetArticle(ctx context.Context, request *article.Get
 		return nil, fmt.Errorf("failed to get article: %w", err)
 	}
 	// Fetch the authors for the article
-	authors, err := s.query.ListArticleAuthorsByArticleID(ctx, request.Id)
+	authors, err := s.articleRepo.ListArticleAuthorsByArticleID(ctx, request.Id)
 
 	if err != nil {
 		if err == sql.ErrNoRows {
@@ -48,12 +55,12 @@ func (s ArticleGrpcService) GetArticle(ctx context.Context, request *article.Get
 	}, nil
 }
 
-func (s ArticleGrpcService) GetArticleByDOI(ctx context.Context, request *article.GetArticleByDOIRequest) (*article.GetArticleByDOIResponse, error) {
+func (s *ArticleGrpcService) GetArticleByDOI(ctx context.Context, request *article.GetArticleByDOIRequest) (*article.GetArticleByDOIResponse, error) {
 	if request == nil || request.Doi == "" {
 		return nil, fmt.Errorf("invalid request: %v", request)
 	}
 	// Fetch the article from the database
-	articleData, err := s.query.GetArticleByDOI(ctx, request.Doi)
+	articleData, err := s.articleRepo.GetArticleByDOI(ctx, request.Doi)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			slog.Warn("article not found", "doi", request.Doi)
@@ -63,7 +70,7 @@ func (s ArticleGrpcService) GetArticleByDOI(ctx context.Context, request *articl
 		return nil, fmt.Errorf("failed to get article by DOI: %w", err)
 	}
 	// Fetch the authors for the article
-	authors, err := s.query.ListArticleAuthorsByArticleID(ctx, articleData.ID)
+	authors, err := s.articleRepo.ListArticleAuthorsByArticleID(ctx, articleData.ID)
 
 	if err != nil {
 		if err == sql.ErrNoRows {
@@ -78,12 +85,12 @@ func (s ArticleGrpcService) GetArticleByDOI(ctx context.Context, request *articl
 	}, nil
 }
 
-func (s ArticleGrpcService) ListArticles(ctx context.Context, request *article.ListArticlesRequest) (*article.ListArticlesResponse, error) {
+func (s *ArticleGrpcService) ListArticles(ctx context.Context, request *article.ListArticlesRequest) (*article.ListArticlesResponse, error) {
 	if request == nil {
 		return nil, fmt.Errorf("invalid request: %v", request)
 	}
 	// Fetch the articles from the database
-	articlesData, err := s.query.ListArticles(ctx)
+	articlesData, err := s.articleRepo.ListArticles(ctx)
 	if err != nil {
 		slog.Error("failed to list articles", "error", err)
 		return nil, fmt.Errorf("failed to list articles: %w", err)
@@ -92,7 +99,7 @@ func (s ArticleGrpcService) ListArticles(ctx context.Context, request *article.L
 	var articles []*article.Article
 	for _, dbArticle := range articlesData {
 		// Fetch the authors for each article
-		authors, err := s.query.ListArticleAuthorsByArticleID(ctx, dbArticle.ID)
+		authors, err := s.articleRepo.ListArticleAuthorsByArticleID(ctx, dbArticle.ID)
 		if err != nil {
 			slog.Error("failed to get article authors", "error", err)
 			return nil, fmt.Errorf("failed to get article authors: %w", err)
@@ -105,13 +112,13 @@ func (s ArticleGrpcService) ListArticles(ctx context.Context, request *article.L
 	}, nil
 }
 
-func (s ArticleGrpcService) CreateArticle(ctx context.Context, request *article.CreateArticleRequest) (*article.CreateArticleResponse, error) {
+func (s *ArticleGrpcService) CreateArticle(ctx context.Context, request *article.CreateArticleRequest) (*article.CreateArticleResponse, error) {
 	// validate the request
 	// validate the request
 	if request == nil || request.Doi == "" || request.Title == "" || request.Authors == nil || len(request.Authors) == 0 || request.PublicationYear == nil {
 		return nil, fmt.Errorf("invalid request: %v", request)
 	}
-	dbArticle, err := s.query.CreateArticle(
+	dbArticle, err := s.articleRepo.CreateArticle(
 		ctx, db.CreateArticleParams{
 			Title:           request.Title,
 			Doi:             request.Doi,
@@ -148,7 +155,7 @@ func (s ArticleGrpcService) CreateArticle(ctx context.Context, request *article.
 			continue // Skip nil authors
 		}
 		// Insert each author into the database
-		_, err = s.query.AddArticleAuthor(ctx, db.AddArticleAuthorParams{
+		_, err = s.articleRepo.AddArticleAuthor(ctx, db.AddArticleAuthorParams{
 			ArticleID: articleID,
 			AuthorID:  author.Id,
 			AuthorOrder: sql.NullInt32{
@@ -167,12 +174,12 @@ func (s ArticleGrpcService) CreateArticle(ctx context.Context, request *article.
 	}, nil
 }
 
-func (s ArticleGrpcService) UpdateArticle(ctx context.Context, request *article.UpdateArticleRequest) (*article.UpdateArticleResponse, error) {
+func (s *ArticleGrpcService) UpdateArticle(ctx context.Context, request *article.UpdateArticleRequest) (*article.UpdateArticleResponse, error) {
 	if request == nil || request.Id == 0 {
 		return nil, fmt.Errorf("invalid request: %v", request)
 	}
 	// Fetch the existing article from the database
-	existingArticle, err := s.query.GetArticle(ctx, request.Id)
+	existingArticle, err := s.articleRepo.GetArticle(ctx, request.Id)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			slog.Warn("article not found for update", "id", request.Id)
@@ -182,7 +189,7 @@ func (s ArticleGrpcService) UpdateArticle(ctx context.Context, request *article.
 		return nil, fmt.Errorf("failed to get article for update: %w", err)
 	}
 
-	err = s.query.UpdateArticle(
+	err = s.articleRepo.UpdateArticle(
 		ctx,
 		db.UpdateArticleParams{
 			ID:              request.Id,
@@ -200,12 +207,12 @@ func (s ArticleGrpcService) UpdateArticle(ctx context.Context, request *article.
 	return &article.UpdateArticleResponse{}, nil
 }
 
-func (s ArticleGrpcService) DeleteArticle(ctx context.Context, request *article.DeleteArticleRequest) (*article.DeleteArticleResponse, error) {
+func (s *ArticleGrpcService) DeleteArticle(ctx context.Context, request *article.DeleteArticleRequest) (*article.DeleteArticleResponse, error) {
 	if request == nil || request.Id == 0 {
 		return nil, fmt.Errorf("invalid request: %v", request)
 	}
 	// Delete the article from the database
-	err := s.query.DeleteArticle(ctx, request.Id)
+	err := s.articleRepo.DeleteArticle(ctx, request.Id)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			slog.Warn("article not found for deletion", "id", request.Id)
@@ -218,16 +225,9 @@ func (s ArticleGrpcService) DeleteArticle(ctx context.Context, request *article.
 	return &article.DeleteArticleResponse{}, nil
 }
 
-func (s ArticleGrpcService) mustEmbedUnimplementedArticlesServiceServer() {
+func (s *ArticleGrpcService) mustEmbedUnimplementedArticlesServiceServer() {
 	// This method is required to satisfy the interface, but it does not need to do anything.
 	// It is used to ensure that the service implements all methods of the ArticlesServiceServer interface.
-}
-
-// NewArticleGrpcService creates a new instance of ArticleGrpcService
-func NewArticleGrpcService(conn *sql.DB) *ArticleGrpcService {
-	return &ArticleGrpcService{
-		query: db.New(conn),
-	}
 }
 
 func dbToGrpcArticle(dbArticle db.Article, dbAuthors []db.ListArticleAuthorsByArticleIDRow) *article.Article {
@@ -245,9 +245,9 @@ func dbToGrpcArticle(dbArticle db.Article, dbAuthors []db.ListArticleAuthorsByAr
 		Doi:             dbArticle.Doi,
 		Title:           dbArticle.Title,
 		Authors:         convertedAuthors,
-		Abstract:        nil,
-		PublicationYear: nil,
-		JournalName:     nil,
+		Abstract:        &dbArticle.Abstract.String,
+		PublicationYear: &dbArticle.PublicationYear.Int32,
+		JournalName:     &dbArticle.JournalName.String,
 		CreatedAt:       timestamppb.New(dbArticle.CreatedAt.Time),
 		UpdatedAt:       timestamppb.New(dbArticle.UpdatedAt.Time),
 	}

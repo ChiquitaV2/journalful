@@ -145,3 +145,9 @@ UPDATE library_articles SET notes = ?, updated_at = CURRENT_TIMESTAMP WHERE id =
 
 -- name: DeleteLibraryArticle :exec
 DELETE FROM library_articles WHERE id = ?;
+
+-- name: UpdateSavedArticle :exec
+UPDATE library_articles SET reading_status = ?, notes = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?;
+
+-- name: DeleteSavedArticle :exec
+DELETE FROM library_articles WHERE id = ?;

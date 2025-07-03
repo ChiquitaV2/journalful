@@ -2,8 +2,7 @@
 GRPC localhost:50051/api.articles.v1.ArticlesService/ListArticles
 
 {
-  "page": 948,
-  "pageSize": 469
+  
 }
 
 

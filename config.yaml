@@ -1,0 +1,9 @@
+server:
+  host: localhost
+  port: 50051
+database:
+  host: database.journalful.orb.local
+  port: 3306
+  user: service_user
+  password: service_password
+  name: journalful

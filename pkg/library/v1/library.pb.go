@@ -80,9 +80,9 @@ func (ReadingStatus) EnumDescriptor() ([]byte, []int) {
 type Library struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Id            int64                  `protobuf:"varint,1,opt,name=id,proto3" json:"id,omitempty"`
-	ProfileId     int64                  `protobuf:"varint,2,opt,name=profile_id,json=profileId,proto3" json:"profile_id,omitempty"`
+	UserId        int64                  `protobuf:"varint,2,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
 	Name          *string                `protobuf:"bytes,3,opt,name=name,proto3,oneof" json:"name,omitempty"`
-	SavedArticles []*SavedArticle        `protobuf:"bytes,4,rep,name=saved_articles,json=savedArticles,proto3" json:"saved_articles,omitempty"`
+	Articles      []*LibraryArticle      `protobuf:"bytes,4,rep,name=articles,proto3" json:"articles,omitempty"`
 	CreatedAt     *timestamppb.Timestamp `protobuf:"bytes,5,opt,name=created_at,json=createdAt,proto3" json:"created_at,omitempty"`
 	UpdatedAt     *timestamppb.Timestamp `protobuf:"bytes,6,opt,name=updated_at,json=updatedAt,proto3" json:"updated_at,omitempty"`
 	unknownFields protoimpl.UnknownFields
@@ -126,9 +126,9 @@ func (x *Library) GetId() int64 {
 	return 0
 }
 
-func (x *Library) GetProfileId() int64 {
+func (x *Library) GetUserId() int64 {
 	if x != nil {
-		return x.ProfileId
+		return x.UserId
 	}
 	return 0
 }
@@ -140,9 +140,9 @@ func (x *Library) GetName() string {
 	return ""
 }
 
-func (x *Library) GetSavedArticles() []*SavedArticle {
+func (x *Library) GetArticles() []*LibraryArticle {
 	if x != nil {
-		return x.SavedArticles
+		return x.Articles
 	}
 	return nil
 }
@@ -161,34 +161,34 @@ func (x *Library) GetUpdatedAt() *timestamppb.Timestamp {
 	return nil
 }
 
-type SavedArticle struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Id            int64                  `protobuf:"varint,1,opt,name=id,proto3" json:"id,omitempty"`
-	LibraryId     int64                  `protobuf:"varint,2,opt,name=library_id,json=libraryId,proto3" json:"library_id,omitempty"`
-	ArticleId     int64                  `protobuf:"varint,3,opt,name=article_id,json=articleId,proto3" json:"article_id,omitempty"`
-	ReadingStatus ReadingStatus          `protobuf:"varint,4,opt,name=reading_status,json=readingStatus,proto3,enum=api.library.v1.ReadingStatus" json:"reading_status,omitempty"`
-	AddedAt       *timestamppb.Timestamp `protobuf:"bytes,5,opt,name=added_at,json=addedAt,proto3" json:"added_at,omitempty"`
-	Notes         *string                `protobuf:"bytes,6,opt,name=notes,proto3,oneof" json:"notes,omitempty"`
-	CreatedAt     *timestamppb.Timestamp `protobuf:"bytes,7,opt,name=created_at,json=createdAt,proto3" json:"created_at,omitempty"`
-	UpdatedAt     *timestamppb.Timestamp `protobuf:"bytes,8,opt,name=updated_at,json=updatedAt,proto3" json:"updated_at,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
+type LibraryArticle struct {
+	state           protoimpl.MessageState `protogen:"open.v1"`
+	Id              int64                  `protobuf:"varint,1,opt,name=id,proto3" json:"id,omitempty"`
+	ArticleId       int64                  `protobuf:"varint,2,opt,name=article_id,json=articleId,proto3" json:"article_id,omitempty"`
+	ReadingStatus   ReadingStatus          `protobuf:"varint,3,opt,name=reading_status,json=readingStatus,proto3,enum=api.library.v1.ReadingStatus" json:"reading_status,omitempty"`
+	AddedAt         *timestamppb.Timestamp `protobuf:"bytes,4,opt,name=added_at,json=addedAt,proto3" json:"added_at,omitempty"`
+	Notes           *string                `protobuf:"bytes,5,opt,name=notes,proto3,oneof" json:"notes,omitempty"`
+	ArticleTitle    string                 `protobuf:"bytes,6,opt,name=article_title,json=articleTitle,proto3" json:"article_title,omitempty"`
+	Doi             string                 `protobuf:"bytes,7,opt,name=doi,proto3" json:"doi,omitempty"`
+	PublicationYear int32                  `protobuf:"varint,8,opt,name=publication_year,json=publicationYear,proto3" json:"publication_year,omitempty"`
+	unknownFields   protoimpl.UnknownFields
+	sizeCache       protoimpl.SizeCache
 }
 
-func (x *SavedArticle) Reset() {
-	*x = SavedArticle{}
+func (x *LibraryArticle) Reset() {
+	*x = LibraryArticle{}
 	mi := &file_library_v1_library_proto_msgTypes[1]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *SavedArticle) String() string {
+func (x *LibraryArticle) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*SavedArticle) ProtoMessage() {}
+func (*LibraryArticle) ProtoMessage() {}
 
-func (x *SavedArticle) ProtoReflect() protoreflect.Message {
+func (x *LibraryArticle) ProtoReflect() protoreflect.Message {
 	mi := &file_library_v1_library_proto_msgTypes[1]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -200,72 +200,73 @@ func (x *SavedArticle) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use SavedArticle.ProtoReflect.Descriptor instead.
-func (*SavedArticle) Descriptor() ([]byte, []int) {
+// Deprecated: Use LibraryArticle.ProtoReflect.Descriptor instead.
+func (*LibraryArticle) Descriptor() ([]byte, []int) {
 	return file_library_v1_library_proto_rawDescGZIP(), []int{1}
 }
 
-func (x *SavedArticle) GetId() int64 {
+func (x *LibraryArticle) GetId() int64 {
 	if x != nil {
 		return x.Id
 	}
 	return 0
 }
 
-func (x *SavedArticle) GetLibraryId() int64 {
-	if x != nil {
-		return x.LibraryId
-	}
-	return 0
-}
-
-func (x *SavedArticle) GetArticleId() int64 {
+func (x *LibraryArticle) GetArticleId() int64 {
 	if x != nil {
 		return x.ArticleId
 	}
 	return 0
 }
 
-func (x *SavedArticle) GetReadingStatus() ReadingStatus {
+func (x *LibraryArticle) GetReadingStatus() ReadingStatus {
 	if x != nil {
 		return x.ReadingStatus
 	}
 	return ReadingStatus_READING_STATUS_UNSPECIFIED
 }
 
-func (x *SavedArticle) GetAddedAt() *timestamppb.Timestamp {
+func (x *LibraryArticle) GetAddedAt() *timestamppb.Timestamp {
 	if x != nil {
 		return x.AddedAt
 	}
 	return nil
 }
 
-func (x *SavedArticle) GetNotes() string {
+func (x *LibraryArticle) GetNotes() string {
 	if x != nil && x.Notes != nil {
 		return *x.Notes
 	}
 	return ""
 }
 
-func (x *SavedArticle) GetCreatedAt() *timestamppb.Timestamp {
+func (x *LibraryArticle) GetArticleTitle() string {
 	if x != nil {
-		return x.CreatedAt
+		return x.ArticleTitle
 	}
-	return nil
+	return ""
 }
 
-func (x *SavedArticle) GetUpdatedAt() *timestamppb.Timestamp {
+func (x *LibraryArticle) GetDoi() string {
 	if x != nil {
-		return x.UpdatedAt
+		return x.Doi
 	}
-	return nil
+	return ""
+}
+
+func (x *LibraryArticle) GetPublicationYear() int32 {
+	if x != nil {
+		return x.PublicationYear
+	}
+	return 0
 }
 
 type SaveArticleToLibraryRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	UserId        string                 `protobuf:"bytes,1,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
-	ArticleId     string                 `protobuf:"bytes,2,opt,name=article_id,json=articleId,proto3" json:"article_id,omitempty"`
+	LibraryId     int64                  `protobuf:"varint,1,opt,name=library_id,json=libraryId,proto3" json:"library_id,omitempty"`
+	ArticleId     int64                  `protobuf:"varint,2,opt,name=article_id,json=articleId,proto3" json:"article_id,omitempty"`
 	ReadingStatus ReadingStatus          `protobuf:"varint,3,opt,name=reading_status,json=readingStatus,proto3,enum=api.library.v1.ReadingStatus" json:"reading_status,omitempty"`
+	Notes         *string                `protobuf:"bytes,4,opt,name=notes,proto3,oneof" json:"notes,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -300,18 +301,18 @@ func (*SaveArticleToLibraryRequest) Descriptor() ([]byte, []int) {
 	return file_library_v1_library_proto_rawDescGZIP(), []int{2}
 }
 
-func (x *SaveArticleToLibraryRequest) GetUserId() string {
+func (x *SaveArticleToLibraryRequest) GetLibraryId() int64 {
 	if x != nil {
-		return x.UserId
+		return x.LibraryId
 	}
-	return ""
+	return 0
 }
 
-func (x *SaveArticleToLibraryRequest) GetArticleId() string {
+func (x *SaveArticleToLibraryRequest) GetArticleId() int64 {
 	if x != nil {
 		return x.ArticleId
 	}
-	return ""
+	return 0
 }
 
 func (x *SaveArticleToLibraryRequest) GetReadingStatus() ReadingStatus {
@@ -321,10 +322,16 @@ func (x *SaveArticleToLibraryRequest) GetReadingStatus() ReadingStatus {
 	return ReadingStatus_READING_STATUS_UNSPECIFIED
 }
 
+func (x *SaveArticleToLibraryRequest) GetNotes() string {
+	if x != nil && x.Notes != nil {
+		return *x.Notes
+	}
+	return ""
+}
+
 type SaveArticleToLibraryResponse struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	UserId        string                 `protobuf:"bytes,1,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
-	ArticleId     string                 `protobuf:"bytes,2,opt,name=article_id,json=articleId,proto3" json:"article_id,omitempty"`
+	Id            int64                  `protobuf:"varint,1,opt,name=id,proto3" json:"id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -359,23 +366,16 @@ func (*SaveArticleToLibraryResponse) Descriptor() ([]byte, []int) {
 	return file_library_v1_library_proto_rawDescGZIP(), []int{3}
 }
 
-func (x *SaveArticleToLibraryResponse) GetUserId() string {
+func (x *SaveArticleToLibraryResponse) GetId() int64 {
 	if x != nil {
-		return x.UserId
+		return x.Id
 	}
-	return ""
-}
-
-func (x *SaveArticleToLibraryResponse) GetArticleId() string {
-	if x != nil {
-		return x.ArticleId
-	}
-	return ""
+	return 0
 }
 
 type GetUserLibraryRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	UserId        string                 `protobuf:"bytes,1,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
+	UserId        int64                  `protobuf:"varint,1,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -410,16 +410,16 @@ func (*GetUserLibraryRequest) Descriptor() ([]byte, []int) {
 	return file_library_v1_library_proto_rawDescGZIP(), []int{4}
 }
 
-func (x *GetUserLibraryRequest) GetUserId() string {
+func (x *GetUserLibraryRequest) GetUserId() int64 {
 	if x != nil {
 		return x.UserId
 	}
-	return ""
+	return 0
 }
 
 type GetUserLibraryResponse struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	SavedArticles []*SavedArticle        `protobuf:"bytes,1,rep,name=saved_articles,json=savedArticles,proto3" json:"saved_articles,omitempty"`
+	Libraries     []*Library             `protobuf:"bytes,1,rep,name=libraries,proto3" json:"libraries,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -454,9 +454,9 @@ func (*GetUserLibraryResponse) Descriptor() ([]byte, []int) {
 	return file_library_v1_library_proto_rawDescGZIP(), []int{5}
 }
 
-func (x *GetUserLibraryResponse) GetSavedArticles() []*SavedArticle {
+func (x *GetUserLibraryResponse) GetLibraries() []*Library {
 	if x != nil {
-		return x.SavedArticles
+		return x.Libraries
 	}
 	return nil
 }
@@ -465,45 +465,42 @@ var File_library_v1_library_proto protoreflect.FileDescriptor
 
 const file_library_v1_library_proto_rawDesc = "" +
 	"\n" +
-	"\x18library/v1/library.proto\x12\x0eapi.library.v1\x1a\x1fgoogle/protobuf/timestamp.proto\"\x95\x02\n" +
+	"\x18library/v1/library.proto\x12\x0eapi.library.v1\x1a\x1fgoogle/protobuf/timestamp.proto\"\x86\x02\n" +
 	"\aLibrary\x12\x0e\n" +
-	"\x02id\x18\x01 \x01(\x03R\x02id\x12\x1d\n" +
-	"\n" +
-	"profile_id\x18\x02 \x01(\x03R\tprofileId\x12\x17\n" +
-	"\x04name\x18\x03 \x01(\tH\x00R\x04name\x88\x01\x01\x12C\n" +
-	"\x0esaved_articles\x18\x04 \x03(\v2\x1c.api.library.v1.SavedArticleR\rsavedArticles\x129\n" +
+	"\x02id\x18\x01 \x01(\x03R\x02id\x12\x17\n" +
+	"\auser_id\x18\x02 \x01(\x03R\x06userId\x12\x17\n" +
+	"\x04name\x18\x03 \x01(\tH\x00R\x04name\x88\x01\x01\x12:\n" +
+	"\barticles\x18\x04 \x03(\v2\x1e.api.library.v1.LibraryArticleR\barticles\x129\n" +
 	"\n" +
 	"created_at\x18\x05 \x01(\v2\x1a.google.protobuf.TimestampR\tcreatedAt\x129\n" +
 	"\n" +
 	"updated_at\x18\x06 \x01(\v2\x1a.google.protobuf.TimestampR\tupdatedAtB\a\n" +
-	"\x05_name\"\xf4\x02\n" +
-	"\fSavedArticle\x12\x0e\n" +
+	"\x05_name\"\xc3\x02\n" +
+	"\x0eLibraryArticle\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\x03R\x02id\x12\x1d\n" +
 	"\n" +
-	"library_id\x18\x02 \x01(\x03R\tlibraryId\x12\x1d\n" +
+	"article_id\x18\x02 \x01(\x03R\tarticleId\x12D\n" +
+	"\x0ereading_status\x18\x03 \x01(\x0e2\x1d.api.library.v1.ReadingStatusR\rreadingStatus\x125\n" +
+	"\badded_at\x18\x04 \x01(\v2\x1a.google.protobuf.TimestampR\aaddedAt\x12\x19\n" +
+	"\x05notes\x18\x05 \x01(\tH\x00R\x05notes\x88\x01\x01\x12#\n" +
+	"\rarticle_title\x18\x06 \x01(\tR\farticleTitle\x12\x10\n" +
+	"\x03doi\x18\a \x01(\tR\x03doi\x12)\n" +
+	"\x10publication_year\x18\b \x01(\x05R\x0fpublicationYearB\b\n" +
+	"\x06_notes\"\xc6\x01\n" +
+	"\x1bSaveArticleToLibraryRequest\x12\x1d\n" +
 	"\n" +
-	"article_id\x18\x03 \x01(\x03R\tarticleId\x12D\n" +
-	"\x0ereading_status\x18\x04 \x01(\x0e2\x1d.api.library.v1.ReadingStatusR\rreadingStatus\x125\n" +
-	"\badded_at\x18\x05 \x01(\v2\x1a.google.protobuf.TimestampR\aaddedAt\x12\x19\n" +
-	"\x05notes\x18\x06 \x01(\tH\x00R\x05notes\x88\x01\x01\x129\n" +
+	"library_id\x18\x01 \x01(\x03R\tlibraryId\x12\x1d\n" +
 	"\n" +
-	"created_at\x18\a \x01(\v2\x1a.google.protobuf.TimestampR\tcreatedAt\x129\n" +
-	"\n" +
-	"updated_at\x18\b \x01(\v2\x1a.google.protobuf.TimestampR\tupdatedAtB\b\n" +
-	"\x06_notes\"\x9b\x01\n" +
-	"\x1bSaveArticleToLibraryRequest\x12\x17\n" +
-	"\auser_id\x18\x01 \x01(\tR\x06userId\x12\x1d\n" +
-	"\n" +
-	"article_id\x18\x02 \x01(\tR\tarticleId\x12D\n" +
-	"\x0ereading_status\x18\x03 \x01(\x0e2\x1d.api.library.v1.ReadingStatusR\rreadingStatus\"V\n" +
-	"\x1cSaveArticleToLibraryResponse\x12\x17\n" +
-	"\auser_id\x18\x01 \x01(\tR\x06userId\x12\x1d\n" +
-	"\n" +
-	"article_id\x18\x02 \x01(\tR\tarticleId\"0\n" +
+	"article_id\x18\x02 \x01(\x03R\tarticleId\x12D\n" +
+	"\x0ereading_status\x18\x03 \x01(\x0e2\x1d.api.library.v1.ReadingStatusR\rreadingStatus\x12\x19\n" +
+	"\x05notes\x18\x04 \x01(\tH\x00R\x05notes\x88\x01\x01B\b\n" +
+	"\x06_notes\".\n" +
+	"\x1cSaveArticleToLibraryResponse\x12\x0e\n" +
+	"\x02id\x18\x01 \x01(\x03R\x02id\"0\n" +
 	"\x15GetUserLibraryRequest\x12\x17\n" +
-	"\auser_id\x18\x01 \x01(\tR\x06userId\"]\n" +
-	"\x16GetUserLibraryResponse\x12C\n" +
-	"\x0esaved_articles\x18\x01 \x03(\v2\x1c.api.library.v1.SavedArticleR\rsavedArticles*\x9e\x01\n" +
+	"\auser_id\x18\x01 \x01(\x03R\x06userId\"O\n" +
+	"\x16GetUserLibraryResponse\x125\n" +
+	"\tlibraries\x18\x01 \x03(\v2\x17.api.library.v1.LibraryR\tlibraries*\x9e\x01\n" +
 	"\rReadingStatus\x12\x1e\n" +
 	"\x1aREADING_STATUS_UNSPECIFIED\x10\x00\x12\x1a\n" +
 	"\x16READING_STATUS_TO_READ\x10\x01\x12\x1a\n" +
@@ -531,7 +528,7 @@ var file_library_v1_library_proto_msgTypes = make([]protoimpl.MessageInfo, 6)
 var file_library_v1_library_proto_goTypes = []any{
 	(ReadingStatus)(0),                   // 0: api.library.v1.ReadingStatus
 	(*Library)(nil),                      // 1: api.library.v1.Library
-	(*SavedArticle)(nil),                 // 2: api.library.v1.SavedArticle
+	(*LibraryArticle)(nil),               // 2: api.library.v1.LibraryArticle
 	(*SaveArticleToLibraryRequest)(nil),  // 3: api.library.v1.SaveArticleToLibraryRequest
 	(*SaveArticleToLibraryResponse)(nil), // 4: api.library.v1.SaveArticleToLibraryResponse
 	(*GetUserLibraryRequest)(nil),        // 5: api.library.v1.GetUserLibraryRequest
@@ -539,24 +536,22 @@ var file_library_v1_library_proto_goTypes = []any{
 	(*timestamppb.Timestamp)(nil),        // 7: google.protobuf.Timestamp
 }
 var file_library_v1_library_proto_depIdxs = []int32{
-	2,  // 0: api.library.v1.Library.saved_articles:type_name -> api.library.v1.SavedArticle
-	7,  // 1: api.library.v1.Library.created_at:type_name -> google.protobuf.Timestamp
-	7,  // 2: api.library.v1.Library.updated_at:type_name -> google.protobuf.Timestamp
-	0,  // 3: api.library.v1.SavedArticle.reading_status:type_name -> api.library.v1.ReadingStatus
-	7,  // 4: api.library.v1.SavedArticle.added_at:type_name -> google.protobuf.Timestamp
-	7,  // 5: api.library.v1.SavedArticle.created_at:type_name -> google.protobuf.Timestamp
-	7,  // 6: api.library.v1.SavedArticle.updated_at:type_name -> google.protobuf.Timestamp
-	0,  // 7: api.library.v1.SaveArticleToLibraryRequest.reading_status:type_name -> api.library.v1.ReadingStatus
-	2,  // 8: api.library.v1.GetUserLibraryResponse.saved_articles:type_name -> api.library.v1.SavedArticle
-	3,  // 9: api.library.v1.LibraryService.SaveArticleToLibrary:input_type -> api.library.v1.SaveArticleToLibraryRequest
-	5,  // 10: api.library.v1.LibraryService.GetUserLibrary:input_type -> api.library.v1.GetUserLibraryRequest
-	4,  // 11: api.library.v1.LibraryService.SaveArticleToLibrary:output_type -> api.library.v1.SaveArticleToLibraryResponse
-	6,  // 12: api.library.v1.LibraryService.GetUserLibrary:output_type -> api.library.v1.GetUserLibraryResponse
-	11, // [11:13] is the sub-list for method output_type
-	9,  // [9:11] is the sub-list for method input_type
-	9,  // [9:9] is the sub-list for extension type_name
-	9,  // [9:9] is the sub-list for extension extendee
-	0,  // [0:9] is the sub-list for field type_name
+	2, // 0: api.library.v1.Library.articles:type_name -> api.library.v1.LibraryArticle
+	7, // 1: api.library.v1.Library.created_at:type_name -> google.protobuf.Timestamp
+	7, // 2: api.library.v1.Library.updated_at:type_name -> google.protobuf.Timestamp
+	0, // 3: api.library.v1.LibraryArticle.reading_status:type_name -> api.library.v1.ReadingStatus
+	7, // 4: api.library.v1.LibraryArticle.added_at:type_name -> google.protobuf.Timestamp
+	0, // 5: api.library.v1.SaveArticleToLibraryRequest.reading_status:type_name -> api.library.v1.ReadingStatus
+	1, // 6: api.library.v1.GetUserLibraryResponse.libraries:type_name -> api.library.v1.Library
+	3, // 7: api.library.v1.LibraryService.SaveArticleToLibrary:input_type -> api.library.v1.SaveArticleToLibraryRequest
+	5, // 8: api.library.v1.LibraryService.GetUserLibrary:input_type -> api.library.v1.GetUserLibraryRequest
+	4, // 9: api.library.v1.LibraryService.SaveArticleToLibrary:output_type -> api.library.v1.SaveArticleToLibraryResponse
+	6, // 10: api.library.v1.LibraryService.GetUserLibrary:output_type -> api.library.v1.GetUserLibraryResponse
+	9, // [9:11] is the sub-list for method output_type
+	7, // [7:9] is the sub-list for method input_type
+	7, // [7:7] is the sub-list for extension type_name
+	7, // [7:7] is the sub-list for extension extendee
+	0, // [0:7] is the sub-list for field type_name
 }
 
 func init() { file_library_v1_library_proto_init() }
@@ -566,6 +561,7 @@ func file_library_v1_library_proto_init() {
 	}
 	file_library_v1_library_proto_msgTypes[0].OneofWrappers = []any{}
 	file_library_v1_library_proto_msgTypes[1].OneofWrappers = []any{}
+	file_library_v1_library_proto_msgTypes[2].OneofWrappers = []any{}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{

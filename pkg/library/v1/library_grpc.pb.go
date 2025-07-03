@@ -28,8 +28,6 @@ const (
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type LibraryServiceClient interface {
 	SaveArticleToLibrary(ctx context.Context, in *SaveArticleToLibraryRequest, opts ...grpc.CallOption) (*SaveArticleToLibraryResponse, error)
-	// rpc UpdateSavedArticle(UpdateSavedArticleRequest) returns (UpdateSavedArticleResponse);
-	// rpc DeleteSavedArticle(DeleteSavedArticleRequest) returns (DeleteSavedArticleResponse);
 	GetUserLibrary(ctx context.Context, in *GetUserLibraryRequest, opts ...grpc.CallOption) (*GetUserLibraryResponse, error)
 }
 
@@ -66,8 +64,6 @@ func (c *libraryServiceClient) GetUserLibrary(ctx context.Context, in *GetUserLi
 // for forward compatibility.
 type LibraryServiceServer interface {
 	SaveArticleToLibrary(context.Context, *SaveArticleToLibraryRequest) (*SaveArticleToLibraryResponse, error)
-	// rpc UpdateSavedArticle(UpdateSavedArticleRequest) returns (UpdateSavedArticleResponse);
-	// rpc DeleteSavedArticle(DeleteSavedArticleRequest) returns (DeleteSavedArticleResponse);
 	GetUserLibrary(context.Context, *GetUserLibraryRequest) (*GetUserLibraryResponse, error)
 	mustEmbedUnimplementedLibraryServiceServer()
 }

@@ -9,14 +9,18 @@ option go_package = "github.com/chiquitav2/journalful/pkg/profile/v1;profile";
 message Profile {
   int64 id = 1;
   string name = 2;
-  optional string bio = 3;
-  optional string institution = 4;
+  string bio = 3;
+  string institution = 4;
   google.protobuf.Timestamp created_at = 5;
   google.protobuf.Timestamp updated_at = 6;
 }
 
 service ProfileService {
   rpc GetProfile(GetProfileRequest) returns (GetProfileResponse);
+  rpc ListProfiles(ListProfilesRequest) returns (ListProfilesResponse);
+  rpc CreateProfile(CreateProfileRequest) returns (CreateProfileResponse);
+  rpc UpdateProfile(UpdateProfileRequest) returns (UpdateProfileResponse);
+  rpc DeleteProfile(DeleteProfileRequest) returns (DeleteProfileResponse);
 }
 
 message GetProfileRequest {
@@ -28,13 +32,11 @@ message GetProfileResponse {
 }
 
 message ListProfilesRequest {
-  int32 page = 1;
-  int32 page_size = 2;
+  // Add pagination or filters here
 }
 
 message ListProfilesResponse {
   repeated Profile profiles = 1;
-  int32 total_count = 2;
 }
 
 message CreateProfileRequest {
@@ -49,13 +51,13 @@ message CreateProfileResponse {
 
 message UpdateProfileRequest {
   int64 id = 1;
-  optional string name = 2;
+  string name = 2;
   optional string bio = 3;
   optional string institution = 4;
 }
 
 message UpdateProfileResponse {
-
+  // Empty response indicating success
 }
 
 message DeleteProfileRequest {
@@ -63,7 +65,5 @@ message DeleteProfileRequest {
 }
 
 message DeleteProfileResponse {
-
+  // Empty response indicating success
 }
-
-

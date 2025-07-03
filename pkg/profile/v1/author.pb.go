@@ -26,7 +26,7 @@ type Author struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Id            int64                  `protobuf:"varint,1,opt,name=id,proto3" json:"id,omitempty"`
 	Name          string                 `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`
-	ProfileId     *int64                 `protobuf:"varint,3,opt,name=profile_id,json=profileId,proto3,oneof" json:"profile_id,omitempty"`
+	ProfileId     int64                  `protobuf:"varint,3,opt,name=profile_id,json=profileId,proto3" json:"profile_id,omitempty"`
 	CreatedAt     *timestamppb.Timestamp `protobuf:"bytes,4,opt,name=created_at,json=createdAt,proto3" json:"created_at,omitempty"`
 	UpdatedAt     *timestamppb.Timestamp `protobuf:"bytes,5,opt,name=updated_at,json=updatedAt,proto3" json:"updated_at,omitempty"`
 	unknownFields protoimpl.UnknownFields
@@ -78,8 +78,8 @@ func (x *Author) GetName() string {
 }
 
 func (x *Author) GetProfileId() int64 {
-	if x != nil && x.ProfileId != nil {
-		return *x.ProfileId
+	if x != nil {
+		return x.ProfileId
 	}
 	return 0
 }
@@ -630,17 +630,16 @@ var File_profile_v1_author_proto protoreflect.FileDescriptor
 
 const file_profile_v1_author_proto_rawDesc = "" +
 	"\n" +
-	"\x17profile/v1/author.proto\x12\x0eapi.profile.v1\x1a\x1fgoogle/protobuf/timestamp.proto\"\xd5\x01\n" +
+	"\x17profile/v1/author.proto\x12\x0eapi.profile.v1\x1a\x1fgoogle/protobuf/timestamp.proto\"\xc1\x01\n" +
 	"\x06Author\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\x03R\x02id\x12\x12\n" +
-	"\x04name\x18\x02 \x01(\tR\x04name\x12\"\n" +
+	"\x04name\x18\x02 \x01(\tR\x04name\x12\x1d\n" +
 	"\n" +
-	"profile_id\x18\x03 \x01(\x03H\x00R\tprofileId\x88\x01\x01\x129\n" +
+	"profile_id\x18\x03 \x01(\x03R\tprofileId\x129\n" +
 	"\n" +
 	"created_at\x18\x04 \x01(\v2\x1a.google.protobuf.TimestampR\tcreatedAt\x129\n" +
 	"\n" +
-	"updated_at\x18\x05 \x01(\v2\x1a.google.protobuf.TimestampR\tupdatedAtB\r\n" +
-	"\v_profile_id\"\"\n" +
+	"updated_at\x18\x05 \x01(\v2\x1a.google.protobuf.TimestampR\tupdatedAt\"\"\n" +
 	"\x10GetAuthorRequest\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\x03R\x02id\"C\n" +
 	"\x11GetAuthorResponse\x12.\n" +
@@ -737,7 +736,6 @@ func file_profile_v1_author_proto_init() {
 	if File_profile_v1_author_proto != nil {
 		return
 	}
-	file_profile_v1_author_proto_msgTypes[0].OneofWrappers = []any{}
 	file_profile_v1_author_proto_msgTypes[7].OneofWrappers = []any{}
 	file_profile_v1_author_proto_msgTypes[9].OneofWrappers = []any{}
 	type x struct{}

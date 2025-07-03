@@ -5,7 +5,11 @@ import (
 	"github.com/chiquitav2/journalful/internal/api"
 	articleImp "github.com/chiquitav2/journalful/internal/article"
 	"github.com/chiquitav2/journalful/internal/health"
+	libraryImp "github.com/chiquitav2/journalful/internal/library"
+	profileImp "github.com/chiquitav2/journalful/internal/profile"
 	article "github.com/chiquitav2/journalful/pkg/articles/v1"
+	"github.com/chiquitav2/journalful/pkg/library/v1"
+	"github.com/chiquitav2/journalful/pkg/profile/v1"
 	"google.golang.org/grpc"
 	healthpb "google.golang.org/grpc/health/grpc_health_v1" // Standard gRPC health package
 	"google.golang.org/grpc/reflection"
@@ -32,6 +36,9 @@ func (g *GrpcService) Register() error {
 
 	// Register the article service with the gRPC server
 	article.RegisterArticlesServiceServer(g.server, articleImp.NewArticleGrpcService(g.dbConn))
+	profile.RegisterAuthorServiceServer(g.server, profileImp.NewAuthorService(g.dbConn))
+	profile.RegisterProfileServiceServer(g.server, profileImp.NewProfileService(g.dbConn))
+	library.RegisterLibraryServiceServer(g.server, libraryImp.NewLibraryService(g.dbConn))
 
 	healthSvr := health.NewHealthCheckService()
 	healthSvr.SetServiceStatus("", healthpb.HealthCheckResponse_SERVING)         // Set overall service status to SERVING

@@ -26,8 +26,8 @@ type Profile struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Id            int64                  `protobuf:"varint,1,opt,name=id,proto3" json:"id,omitempty"`
 	Name          string                 `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`
-	Bio           *string                `protobuf:"bytes,3,opt,name=bio,proto3,oneof" json:"bio,omitempty"`
-	Institution   *string                `protobuf:"bytes,4,opt,name=institution,proto3,oneof" json:"institution,omitempty"`
+	Bio           string                 `protobuf:"bytes,3,opt,name=bio,proto3" json:"bio,omitempty"`
+	Institution   string                 `protobuf:"bytes,4,opt,name=institution,proto3" json:"institution,omitempty"`
 	CreatedAt     *timestamppb.Timestamp `protobuf:"bytes,5,opt,name=created_at,json=createdAt,proto3" json:"created_at,omitempty"`
 	UpdatedAt     *timestamppb.Timestamp `protobuf:"bytes,6,opt,name=updated_at,json=updatedAt,proto3" json:"updated_at,omitempty"`
 	unknownFields protoimpl.UnknownFields
@@ -79,15 +79,15 @@ func (x *Profile) GetName() string {
 }
 
 func (x *Profile) GetBio() string {
-	if x != nil && x.Bio != nil {
-		return *x.Bio
+	if x != nil {
+		return x.Bio
 	}
 	return ""
 }
 
 func (x *Profile) GetInstitution() string {
-	if x != nil && x.Institution != nil {
-		return *x.Institution
+	if x != nil {
+		return x.Institution
 	}
 	return ""
 }
@@ -196,8 +196,6 @@ func (x *GetProfileResponse) GetProfile() *Profile {
 
 type ListProfilesRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	Page          int32                  `protobuf:"varint,1,opt,name=page,proto3" json:"page,omitempty"`
-	PageSize      int32                  `protobuf:"varint,2,opt,name=page_size,json=pageSize,proto3" json:"page_size,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -232,24 +230,9 @@ func (*ListProfilesRequest) Descriptor() ([]byte, []int) {
 	return file_profile_v1_profile_proto_rawDescGZIP(), []int{3}
 }
 
-func (x *ListProfilesRequest) GetPage() int32 {
-	if x != nil {
-		return x.Page
-	}
-	return 0
-}
-
-func (x *ListProfilesRequest) GetPageSize() int32 {
-	if x != nil {
-		return x.PageSize
-	}
-	return 0
-}
-
 type ListProfilesResponse struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Profiles      []*Profile             `protobuf:"bytes,1,rep,name=profiles,proto3" json:"profiles,omitempty"`
-	TotalCount    int32                  `protobuf:"varint,2,opt,name=total_count,json=totalCount,proto3" json:"total_count,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -289,13 +272,6 @@ func (x *ListProfilesResponse) GetProfiles() []*Profile {
 		return x.Profiles
 	}
 	return nil
-}
-
-func (x *ListProfilesResponse) GetTotalCount() int32 {
-	if x != nil {
-		return x.TotalCount
-	}
-	return 0
 }
 
 type CreateProfileRequest struct {
@@ -405,7 +381,7 @@ func (x *CreateProfileResponse) GetId() int64 {
 type UpdateProfileRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Id            int64                  `protobuf:"varint,1,opt,name=id,proto3" json:"id,omitempty"`
-	Name          *string                `protobuf:"bytes,2,opt,name=name,proto3,oneof" json:"name,omitempty"`
+	Name          string                 `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`
 	Bio           *string                `protobuf:"bytes,3,opt,name=bio,proto3,oneof" json:"bio,omitempty"`
 	Institution   *string                `protobuf:"bytes,4,opt,name=institution,proto3,oneof" json:"institution,omitempty"`
 	unknownFields protoimpl.UnknownFields
@@ -450,8 +426,8 @@ func (x *UpdateProfileRequest) GetId() int64 {
 }
 
 func (x *UpdateProfileRequest) GetName() string {
-	if x != nil && x.Name != nil {
-		return *x.Name
+	if x != nil {
+		return x.Name
 	}
 	return ""
 }
@@ -590,29 +566,23 @@ var File_profile_v1_profile_proto protoreflect.FileDescriptor
 
 const file_profile_v1_profile_proto_rawDesc = "" +
 	"\n" +
-	"\x18profile/v1/profile.proto\x12\x0eapi.profile.v1\x1a\x1fgoogle/protobuf/timestamp.proto\"\xf9\x01\n" +
+	"\x18profile/v1/profile.proto\x12\x0eapi.profile.v1\x1a\x1fgoogle/protobuf/timestamp.proto\"\xd7\x01\n" +
 	"\aProfile\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\x03R\x02id\x12\x12\n" +
-	"\x04name\x18\x02 \x01(\tR\x04name\x12\x15\n" +
-	"\x03bio\x18\x03 \x01(\tH\x00R\x03bio\x88\x01\x01\x12%\n" +
-	"\vinstitution\x18\x04 \x01(\tH\x01R\vinstitution\x88\x01\x01\x129\n" +
+	"\x04name\x18\x02 \x01(\tR\x04name\x12\x10\n" +
+	"\x03bio\x18\x03 \x01(\tR\x03bio\x12 \n" +
+	"\vinstitution\x18\x04 \x01(\tR\vinstitution\x129\n" +
 	"\n" +
 	"created_at\x18\x05 \x01(\v2\x1a.google.protobuf.TimestampR\tcreatedAt\x129\n" +
 	"\n" +
-	"updated_at\x18\x06 \x01(\v2\x1a.google.protobuf.TimestampR\tupdatedAtB\x06\n" +
-	"\x04_bioB\x0e\n" +
-	"\f_institution\"#\n" +
+	"updated_at\x18\x06 \x01(\v2\x1a.google.protobuf.TimestampR\tupdatedAt\"#\n" +
 	"\x11GetProfileRequest\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\x03R\x02id\"G\n" +
 	"\x12GetProfileResponse\x121\n" +
-	"\aprofile\x18\x01 \x01(\v2\x17.api.profile.v1.ProfileR\aprofile\"F\n" +
-	"\x13ListProfilesRequest\x12\x12\n" +
-	"\x04page\x18\x01 \x01(\x05R\x04page\x12\x1b\n" +
-	"\tpage_size\x18\x02 \x01(\x05R\bpageSize\"l\n" +
+	"\aprofile\x18\x01 \x01(\v2\x17.api.profile.v1.ProfileR\aprofile\"\x15\n" +
+	"\x13ListProfilesRequest\"K\n" +
 	"\x14ListProfilesResponse\x123\n" +
-	"\bprofiles\x18\x01 \x03(\v2\x17.api.profile.v1.ProfileR\bprofiles\x12\x1f\n" +
-	"\vtotal_count\x18\x02 \x01(\x05R\n" +
-	"totalCount\"\x80\x01\n" +
+	"\bprofiles\x18\x01 \x03(\v2\x17.api.profile.v1.ProfileR\bprofiles\"\x80\x01\n" +
 	"\x14CreateProfileRequest\x12\x12\n" +
 	"\x04name\x18\x01 \x01(\tR\x04name\x12\x15\n" +
 	"\x03bio\x18\x02 \x01(\tH\x00R\x03bio\x88\x01\x01\x12%\n" +
@@ -620,22 +590,25 @@ const file_profile_v1_profile_proto_rawDesc = "" +
 	"\x04_bioB\x0e\n" +
 	"\f_institution\"'\n" +
 	"\x15CreateProfileResponse\x12\x0e\n" +
-	"\x02id\x18\x01 \x01(\x03R\x02id\"\x9e\x01\n" +
+	"\x02id\x18\x01 \x01(\x03R\x02id\"\x90\x01\n" +
 	"\x14UpdateProfileRequest\x12\x0e\n" +
-	"\x02id\x18\x01 \x01(\x03R\x02id\x12\x17\n" +
-	"\x04name\x18\x02 \x01(\tH\x00R\x04name\x88\x01\x01\x12\x15\n" +
-	"\x03bio\x18\x03 \x01(\tH\x01R\x03bio\x88\x01\x01\x12%\n" +
-	"\vinstitution\x18\x04 \x01(\tH\x02R\vinstitution\x88\x01\x01B\a\n" +
-	"\x05_nameB\x06\n" +
+	"\x02id\x18\x01 \x01(\x03R\x02id\x12\x12\n" +
+	"\x04name\x18\x02 \x01(\tR\x04name\x12\x15\n" +
+	"\x03bio\x18\x03 \x01(\tH\x00R\x03bio\x88\x01\x01\x12%\n" +
+	"\vinstitution\x18\x04 \x01(\tH\x01R\vinstitution\x88\x01\x01B\x06\n" +
 	"\x04_bioB\x0e\n" +
 	"\f_institution\"\x17\n" +
 	"\x15UpdateProfileResponse\"&\n" +
 	"\x14DeleteProfileRequest\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\x03R\x02id\"\x17\n" +
-	"\x15DeleteProfileResponse2e\n" +
+	"\x15DeleteProfileResponse2\xda\x03\n" +
 	"\x0eProfileService\x12S\n" +
 	"\n" +
-	"GetProfile\x12!.api.profile.v1.GetProfileRequest\x1a\".api.profile.v1.GetProfileResponseB9Z7github.com/chiquitav2/journalful/pkg/profile/v1;profileb\x06proto3"
+	"GetProfile\x12!.api.profile.v1.GetProfileRequest\x1a\".api.profile.v1.GetProfileResponse\x12Y\n" +
+	"\fListProfiles\x12#.api.profile.v1.ListProfilesRequest\x1a$.api.profile.v1.ListProfilesResponse\x12\\\n" +
+	"\rCreateProfile\x12$.api.profile.v1.CreateProfileRequest\x1a%.api.profile.v1.CreateProfileResponse\x12\\\n" +
+	"\rUpdateProfile\x12$.api.profile.v1.UpdateProfileRequest\x1a%.api.profile.v1.UpdateProfileResponse\x12\\\n" +
+	"\rDeleteProfile\x12$.api.profile.v1.DeleteProfileRequest\x1a%.api.profile.v1.DeleteProfileResponseB9Z7github.com/chiquitav2/journalful/pkg/profile/v1;profileb\x06proto3"
 
 var (
 	file_profile_v1_profile_proto_rawDescOnce sync.Once
@@ -670,9 +643,17 @@ var file_profile_v1_profile_proto_depIdxs = []int32{
 	0,  // 2: api.profile.v1.GetProfileResponse.profile:type_name -> api.profile.v1.Profile
 	0,  // 3: api.profile.v1.ListProfilesResponse.profiles:type_name -> api.profile.v1.Profile
 	1,  // 4: api.profile.v1.ProfileService.GetProfile:input_type -> api.profile.v1.GetProfileRequest
-	2,  // 5: api.profile.v1.ProfileService.GetProfile:output_type -> api.profile.v1.GetProfileResponse
-	5,  // [5:6] is the sub-list for method output_type
-	4,  // [4:5] is the sub-list for method input_type
+	3,  // 5: api.profile.v1.ProfileService.ListProfiles:input_type -> api.profile.v1.ListProfilesRequest
+	5,  // 6: api.profile.v1.ProfileService.CreateProfile:input_type -> api.profile.v1.CreateProfileRequest
+	7,  // 7: api.profile.v1.ProfileService.UpdateProfile:input_type -> api.profile.v1.UpdateProfileRequest
+	9,  // 8: api.profile.v1.ProfileService.DeleteProfile:input_type -> api.profile.v1.DeleteProfileRequest
+	2,  // 9: api.profile.v1.ProfileService.GetProfile:output_type -> api.profile.v1.GetProfileResponse
+	4,  // 10: api.profile.v1.ProfileService.ListProfiles:output_type -> api.profile.v1.ListProfilesResponse
+	6,  // 11: api.profile.v1.ProfileService.CreateProfile:output_type -> api.profile.v1.CreateProfileResponse
+	8,  // 12: api.profile.v1.ProfileService.UpdateProfile:output_type -> api.profile.v1.UpdateProfileResponse
+	10, // 13: api.profile.v1.ProfileService.DeleteProfile:output_type -> api.profile.v1.DeleteProfileResponse
+	9,  // [9:14] is the sub-list for method output_type
+	4,  // [4:9] is the sub-list for method input_type
 	4,  // [4:4] is the sub-list for extension type_name
 	4,  // [4:4] is the sub-list for extension extendee
 	0,  // [0:4] is the sub-list for field type_name
@@ -683,7 +664,6 @@ func file_profile_v1_profile_proto_init() {
 	if File_profile_v1_profile_proto != nil {
 		return
 	}
-	file_profile_v1_profile_proto_msgTypes[0].OneofWrappers = []any{}
 	file_profile_v1_profile_proto_msgTypes[5].OneofWrappers = []any{}
 	file_profile_v1_profile_proto_msgTypes[7].OneofWrappers = []any{}
 	type x struct{}
