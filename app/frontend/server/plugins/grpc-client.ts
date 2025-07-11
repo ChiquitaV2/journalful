@@ -1,5 +1,5 @@
-import {ArticlesServiceClientImpl} from "~/shared/grpc/articles/v1/article";
-import {rpc} from "~/shared/grpc/rpc";
+import {rpc} from "#shared/grpc/rpc";
+import {ArticlesServiceClientImpl} from "#shared/grpc/articles/v1/article";
 
 export default defineNitroPlugin(nitroApp => {
 

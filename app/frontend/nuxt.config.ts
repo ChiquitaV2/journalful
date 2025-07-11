@@ -1,14 +1,20 @@
+import tailwindcss from "@tailwindcss/vite";
+
 export default defineNuxtConfig({
   devtools: {
     enabled: true
   },
+  compatibilityDate: '2025-07-11',
+  future: {
+    compatibilityVersion: 4
+  },
   css: [
     '~/assets/styles/main.css'
   ],
-  runtimeConfig: {
-    public: {
-      apiBaseUrl: process.env.API_BASE_URL || 'http://localhost:8080',
-    },
+  vite: {
+    plugins: [
+        tailwindcss()
+    ]
   },
   app: {
     head: {
