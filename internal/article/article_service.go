@@ -3,13 +3,16 @@ package article
 import (
 	context "context"
 	"database/sql"
+	"encoding/json"
 	"fmt"
 	"github.com/chiquitav2/journalful/internal/db"
 	"github.com/chiquitav2/journalful/internal/profile"
 	"github.com/chiquitav2/journalful/pkg/articles/v1"
 	v1 "github.com/chiquitav2/journalful/pkg/profile/v1"
 	"google.golang.org/protobuf/types/known/timestamppb"
+	"io"
 	"log/slog"
+	"net/http"
 )
 
 type ArticleGrpcService struct {
@@ -113,17 +116,81 @@ func (s *ArticleGrpcService) ListArticles(ctx context.Context, request *article.
 }
 
 func (s *ArticleGrpcService) CreateArticle(ctx context.Context, request *article.CreateArticleRequest) (*article.CreateArticleResponse, error) {
-	// validate the request
-	// validate the request
-	if request == nil || request.Doi == "" || request.Title == "" || request.Authors == nil || len(request.Authors) == 0 || request.PublicationYear == nil {
-		return nil, fmt.Errorf("invalid request: %v", request)
+	// Validate the request
+	if request == nil || request.Doi == "" {
+		return nil, fmt.Errorf("invalid request: DOI is required")
 	}
+
+	var (
+		articleTitle           string
+		articleAbstract        sql.NullString
+		articlePublicationYear sql.NullInt32
+		articleJournalName     sql.NullString
+		normalizedAuthors      []string
+	)
+
+	// Attempt to fetch metadata from DOI if provided
+	if request.Doi != "" {
+		meta, err := s.fetchArticleMetadataFromDOI(request.Doi)
+		if err != nil {
+			slog.Error("failed to fetch article metadata from DOI", "doi", request.Doi, "error", err)
+			// Continue with provided request data if DOI fetch fails
+		} else if meta != nil {
+			if len(meta.Title) > 0 {
+				articleTitle = meta.Title[0]
+			}
+			articleAbstract = sql.NullString{String: meta.Abstract, Valid: meta.Abstract != ""}
+			if len(meta.PublishedOnline.DateParts) > 0 && len(meta.PublishedOnline.DateParts[0]) > 0 {
+				articlePublicationYear = sql.NullInt32{Int32: int32(meta.PublishedOnline.DateParts[0][0]), Valid: true}
+			}
+			if len(meta.ContainerTitle) > 0 {
+				articleJournalName = sql.NullString{String: meta.ContainerTitle[0], Valid: meta.ContainerTitle[0] != ""}
+			}
+
+			for _, author := range meta.Author {
+				fullName := fmt.Sprintf("%s %s", author.Given, author.Family)
+				normalizedAuthors = append(normalizedAuthors, fullName)
+			}
+		}
+	}
+
+	// Override with request data if provided
+	if request.Title != "" {
+		articleTitle = request.Title
+	}
+	if request.Abstract != nil && *request.Abstract != "" {
+		articleAbstract = sql.NullString{String: *request.Abstract, Valid: true}
+	}
+	if request.PublicationYear != nil && *request.PublicationYear != 0 {
+		articlePublicationYear = sql.NullInt32{Int32: *request.PublicationYear, Valid: true}
+	}
+	if request.JournalName != nil && *request.JournalName != "" {
+		articleJournalName = sql.NullString{String: *request.JournalName, Valid: true}
+	}
+
+	if len(request.Authors) > 0 {
+		normalizedAuthors = make([]string, 0, len(request.Authors))
+		for _, author := range request.Authors {
+			if author != nil && author.Name != "" {
+				normalizedAuthors = append(normalizedAuthors, author.Name)
+			} else {
+				slog.Warn("invalid author data in request", "author", author)
+			}
+		}
+	}
+
+	// Final validation after attempting to fetch/override
+	if articleTitle == "" || len(normalizedAuthors) == 0 || !articlePublicationYear.Valid {
+		return nil, fmt.Errorf("missing required article fields after DOI lookup and request override: title, authors, or publication year")
+	}
+
 	dbArticle, err := s.articleRepo.CreateArticle(
 		ctx, db.CreateArticleParams{
-			Title:           request.Title,
+			Title:           articleTitle,
 			Doi:             request.Doi,
-			Abstract:        sql.NullString{String: *request.Abstract},
-			PublicationYear: sql.NullInt32{Int32: *request.PublicationYear},
+			Abstract:        articleAbstract,
+			PublicationYear: articlePublicationYear,
+			JournalName:     articleJournalName,
 		})
 	if err != nil {
 		slog.Error("failed to create article", "error", err)
@@ -134,16 +201,8 @@ func (s *ArticleGrpcService) CreateArticle(ctx context.Context, request *article
 		slog.Error("failed to get last insert ID", "error", err)
 		return nil, fmt.Errorf("failed to get last insert ID: %w", err)
 	}
-	slog.Info("article created", "id", articleID, "doi", request.Doi, "title", request.Title)
+	slog.Info("article created", "id", articleID, "doi", request.Doi, "title", articleTitle)
 
-	normalizedAuthors := make([]string, 0, len(request.Authors))
-	for _, author := range request.Authors {
-		if author != nil && author.Name != "" {
-			normalizedAuthors = append(normalizedAuthors, author.Name)
-		} else {
-			slog.Warn("invalid author data", "author", author)
-		}
-	}
 	authors, err := s.authorRepo.FindOrCreateAuthors(ctx, normalizedAuthors)
 	if err != nil {
 		slog.Error("failed to find or create authors", "error", err)
@@ -160,6 +219,7 @@ func (s *ArticleGrpcService) CreateArticle(ctx context.Context, request *article
 			AuthorID:  author.Id,
 			AuthorOrder: sql.NullInt32{
 				Int32: int32(i + 1), // Use 1-based index for order
+				Valid: true,
 			},
 		})
 		if err != nil {
@@ -168,7 +228,7 @@ func (s *ArticleGrpcService) CreateArticle(ctx context.Context, request *article
 		}
 	}
 
-	slog.Info("article created successfully", "id", articleID, "doi", request.Doi, "title", request.Title)
+	slog.Info("article created successfully", "id", articleID, "doi", request.Doi, "title", articleTitle)
 	return &article.CreateArticleResponse{
 		Id: articleID,
 	}, nil
@@ -251,4 +311,54 @@ func dbToGrpcArticle(dbArticle db.Article, dbAuthors []db.ListArticleAuthorsByAr
 		CreatedAt:       timestamppb.New(dbArticle.CreatedAt.Time),
 		UpdatedAt:       timestamppb.New(dbArticle.UpdatedAt.Time),
 	}
+}
+
+// CrossRef API response structs
+type CrossRefResponse struct {
+	Message CrossRefMessage `json:"message"`
+}
+
+type CrossRefMessage struct {
+	DOI             string           `json:"DOI"`
+	Title           []string         `json:"title"`
+	Author          []CrossRefAuthor `json:"author"`
+	PublishedOnline CrossRefDate     `json:"published-online"`
+	Abstract        string           `json:"abstract"`
+	ContainerTitle  []string         `json:"container-title"`
+}
+
+type CrossRefAuthor struct {
+	Given  string `json:"given"`
+	Family string `json:"family"`
+}
+
+type CrossRefDate struct {
+	DateParts [][]int `json:"date-parts"`
+}
+
+func (s *ArticleGrpcService) fetchArticleMetadataFromDOI(doi string) (*CrossRefMessage, error) {
+	url := fmt.Sprintf("https://api.crossref.org/v1/works/%s", doi)
+
+	resp, err := http.Get(url)
+	if err != nil {
+		return nil, fmt.Errorf("failed to make HTTP request to CrossRef API: %w", err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("CrossRef API returned non-OK status: %s", resp.Status)
+	}
+
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return nil, fmt.Errorf("failed to read CrossRef API response body: %w", err)
+	}
+
+	var crossRefResponse CrossRefResponse
+	err = json.Unmarshal(body, &crossRefResponse)
+	if err != nil {
+		return nil, fmt.Errorf("failed to unmarshal CrossRef API response: %w", err)
+	}
+
+	return &crossRefResponse.Message, nil
 }

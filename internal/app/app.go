@@ -48,7 +48,7 @@ func (s *App) Start() {
 	slog.Info("App started")
 	// Example: http.ListenAndServe(":8080", nil)
 	// This is a placeholder; actual server logic would go here
-	if err := s.grpcApi.Start(); err != nil {
+	if err := s.grpcApi.Start(s.config); err != nil {
 		slog.Error("Failed to start gRPC API", "error", err)
 	} else {
 		slog.Info("gRPC API started successfully")

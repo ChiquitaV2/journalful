@@ -8,6 +8,7 @@ import (
 	libraryImp "github.com/chiquitav2/journalful/internal/library"
 	profileImp "github.com/chiquitav2/journalful/internal/profile"
 	article "github.com/chiquitav2/journalful/pkg/articles/v1"
+	"github.com/chiquitav2/journalful/pkg/conf"
 	"github.com/chiquitav2/journalful/pkg/library/v1"
 	"github.com/chiquitav2/journalful/pkg/profile/v1"
 	"google.golang.org/grpc"
@@ -48,12 +49,12 @@ func (g *GrpcService) Register() error {
 	return nil
 }
 
-func (g *GrpcService) Start() error {
-	lis, err := net.Listen("tcp", ":50051")
+func (g *GrpcService) Start(cfg *conf.Config) error {
+	lis, err := net.Listen("tcp", ":"+cfg.Server.Port)
 	if err != nil {
 		slog.Error("Failed to listen: %v", err)
 	}
-	slog.Info("gRPC server is starting on port 50051")
+	slog.Info("gRPC server is starting on port ", cfg.Server.Port)
 	if err := g.server.Serve(lis); err != nil {
 		slog.Error("Failed to serve: %v", err)
 		return err
