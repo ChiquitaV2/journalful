@@ -8,7 +8,6 @@ import (
 )
 
 type AuthorService struct {
-	profile.UnimplementedAuthorServiceServer
 	repo Repository
 }
 
@@ -18,23 +17,23 @@ func NewAuthorService(conn *sql.DB) *AuthorService {
 	}
 }
 
-func (a *AuthorService) GetAuthor(ctx context.Context, request *profile.GetAuthorRequest) (*profile.GetAuthorResponse, error) {
-	author, err := a.repo.GetAuthor(ctx, request.Id)
+func (a *AuthorService) GetAuthor(ctx context.Context, id int64) (*profile.GetAuthorResponse, error) {
+	author, err := a.repo.GetAuthor(ctx, id)
 	if err != nil {
 		return nil, err
 	}
 	return &profile.GetAuthorResponse{Author: author}, nil
 }
 
-func (a *AuthorService) GetAuthorByProfileID(ctx context.Context, request *profile.GetAuthorByProfileIDRequest) (*profile.GetAuthorByProfileIDResponse, error) {
-	author, err := a.repo.GetAuthorByProfileID(ctx, sql.NullInt64{Int64: request.ProfileId, Valid: true})
+func (a *AuthorService) GetAuthorByProfileID(ctx context.Context, id int64) (*profile.GetAuthorByProfileIDResponse, error) {
+	author, err := a.repo.GetAuthorByProfileID(ctx, sql.NullInt64{Int64: id, Valid: true})
 	if err != nil {
 		return nil, err
 	}
 	return &profile.GetAuthorByProfileIDResponse{Author: author}, nil
 }
 
-func (a *AuthorService) ListAuthors(ctx context.Context, request *profile.ListAuthorsRequest) (*profile.ListAuthorsResponse, error) {
+func (a *AuthorService) ListAuthors(ctx context.Context) (*profile.ListAuthorsResponse, error) {
 	authors, err := a.repo.ListAuthors(ctx)
 	if err != nil {
 		return nil, err
@@ -76,8 +75,8 @@ func (a *AuthorService) UpdateAuthor(ctx context.Context, request *profile.Updat
 	return &profile.UpdateAuthorResponse{}, nil
 }
 
-func (a *AuthorService) DeleteAuthor(ctx context.Context, request *profile.DeleteAuthorRequest) (*profile.DeleteAuthorResponse, error) {
-	err := a.repo.DeleteAuthor(ctx, request.Id)
+func (a *AuthorService) DeleteAuthor(ctx context.Context, id int64) (*profile.DeleteAuthorResponse, error) {
+	err := a.repo.DeleteAuthor(ctx, id)
 	if err != nil {
 		return nil, err
 	}

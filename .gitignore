@@ -32,3 +32,6 @@ go.work.sum
  .vscode/
 
  .DS_Store
+/.idea/vcs.xml
+/.idea/sqldialects.xml
+/.idea/dataSources.xml

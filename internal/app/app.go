@@ -32,7 +32,7 @@ func (s *App) Init() error {
 		return fmt.Errorf("failed to connect to the database")
 	}
 
-	s.grpcApi = grpc.NewGrpcService(s.db)
+	s.grpcApi = grpcapi.NewServer(s.db)
 
 	// Start the gRPC server here
 	// This is a placeholder for actual server start logic

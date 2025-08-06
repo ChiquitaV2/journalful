@@ -8,8 +8,11 @@ import (
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
+type LibraryServiceInterface interface {
+	SaveArticleToLibrary(ctx context.Context, request *library.SaveArticleToLibraryRequest) (*library.SaveArticleToLibraryResponse, error)
+	GetUserLibrary(ctx context.Context, request *library.GetUserLibraryRequest) (*library.GetUserLibraryResponse, error)
+}
 type LibraryService struct {
-	library.UnimplementedLibraryServiceServer
 	repo *db.Queries
 }
 
@@ -77,9 +80,4 @@ func (l *LibraryService) GetUserLibrary(ctx context.Context, request *library.Ge
 	}
 
 	return &library.GetUserLibraryResponse{Libraries: response}, nil
-}
-
-func (l *LibraryService) mustEmbedUnimplementedLibraryServiceServer() {
-	//TODO implement me
-	panic("implement me")
 }

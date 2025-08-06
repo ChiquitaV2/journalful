@@ -15,40 +15,45 @@ import (
 	"net/http"
 )
 
-type ArticleGrpcService struct {
-	article.UnimplementedArticlesServiceServer
+type ArticleService interface {
+	GetArticle(ctx context.Context, id int64) (*article.GetArticleResponse, error)
+	GetArticleByDOI(ctx context.Context, doi string) (*article.GetArticleByDOIResponse, error)
+	ListArticles(ctx context.Context, request *article.ListArticlesRequest) (*article.ListArticlesResponse, error)
+	CreateArticle(ctx context.Context, request *article.CreateArticleRequest) (*article.CreateArticleResponse, error)
+	UpdateArticle(ctx context.Context, request *article.UpdateArticleRequest) (*article.UpdateArticleResponse, error)
+	DeleteArticle(ctx context.Context, request *article.DeleteArticleRequest) (*article.DeleteArticleResponse, error)
+}
+
+type ArticleSerivceImp struct {
 	authorRepo  profile.Repository
 	articleRepo *db.Queries
 }
 
-func NewArticleGrpcService(conn *sql.DB) *ArticleGrpcService {
-	return &ArticleGrpcService{
+func NewArticleSerivce(conn *sql.DB) ArticleService {
+	return &ArticleSerivceImp{
 		authorRepo:  profile.NewProfileRepository(conn),
 		articleRepo: db.New(conn),
 	}
 }
 
-func (s *ArticleGrpcService) GetArticle(ctx context.Context, request *article.GetArticleRequest) (*article.GetArticleResponse, error) {
-	if request == nil || request.Id == 0 {
-		return nil, fmt.Errorf("invalid request: %v", request)
-	}
+func (s *ArticleSerivceImp) GetArticle(ctx context.Context, id int64) (*article.GetArticleResponse, error) {
 	// Fetch the article from the database
-	articleData, err := s.articleRepo.GetArticle(ctx, request.Id)
+	articleData, err := s.articleRepo.GetArticle(ctx, id)
 	if err != nil {
 		if err == sql.ErrNoRows {
-			slog.Warn("article not found", "id", request.Id)
-			return nil, fmt.Errorf("article not found with ID: %d", request.Id)
+			slog.Warn("article not found", "id", id)
+			return nil, fmt.Errorf("article not found with ID: %d", id)
 		}
 		slog.Error("failed to get article", "error", err)
 		return nil, fmt.Errorf("failed to get article: %w", err)
 	}
 	// Fetch the authors for the article
-	authors, err := s.articleRepo.ListArticleAuthorsByArticleID(ctx, request.Id)
+	authors, err := s.articleRepo.ListArticleAuthorsByArticleID(ctx, id)
 
 	if err != nil {
 		if err == sql.ErrNoRows {
-			slog.Warn("no authors found for article", "id", request.Id)
-			return nil, fmt.Errorf("no authors found for article with ID: %d", request.Id)
+			slog.Warn("no authors found for article", "id", id)
+			return nil, fmt.Errorf("no authors found for article with ID: %d", id)
 		}
 		slog.Error("failed to get article authors", "error", err)
 		return nil, fmt.Errorf("failed to get article authors: %w", err)
@@ -58,16 +63,13 @@ func (s *ArticleGrpcService) GetArticle(ctx context.Context, request *article.Ge
 	}, nil
 }
 
-func (s *ArticleGrpcService) GetArticleByDOI(ctx context.Context, request *article.GetArticleByDOIRequest) (*article.GetArticleByDOIResponse, error) {
-	if request == nil || request.Doi == "" {
-		return nil, fmt.Errorf("invalid request: %v", request)
-	}
+func (s *ArticleSerivceImp) GetArticleByDOI(ctx context.Context, doi string) (*article.GetArticleByDOIResponse, error) {
 	// Fetch the article from the database
-	articleData, err := s.articleRepo.GetArticleByDOI(ctx, request.Doi)
+	articleData, err := s.articleRepo.GetArticleByDOI(ctx, doi)
 	if err != nil {
 		if err == sql.ErrNoRows {
-			slog.Warn("article not found", "doi", request.Doi)
-			return nil, fmt.Errorf("article not found with DOI: %s", request.Doi)
+			slog.Warn("article not found", "doi", doi)
+			return nil, fmt.Errorf("article not found with DOI: %s", doi)
 		}
 		slog.Error("failed to get article by DOI", "error", err)
 		return nil, fmt.Errorf("failed to get article by DOI: %w", err)
@@ -88,7 +90,7 @@ func (s *ArticleGrpcService) GetArticleByDOI(ctx context.Context, request *artic
 	}, nil
 }
 
-func (s *ArticleGrpcService) ListArticles(ctx context.Context, request *article.ListArticlesRequest) (*article.ListArticlesResponse, error) {
+func (s *ArticleSerivceImp) ListArticles(ctx context.Context, request *article.ListArticlesRequest) (*article.ListArticlesResponse, error) {
 	if request == nil {
 		return nil, fmt.Errorf("invalid request: %v", request)
 	}
@@ -115,7 +117,7 @@ func (s *ArticleGrpcService) ListArticles(ctx context.Context, request *article.
 	}, nil
 }
 
-func (s *ArticleGrpcService) CreateArticle(ctx context.Context, request *article.CreateArticleRequest) (*article.CreateArticleResponse, error) {
+func (s *ArticleSerivceImp) CreateArticle(ctx context.Context, request *article.CreateArticleRequest) (*article.CreateArticleResponse, error) {
 	// Validate the request
 	if request == nil || request.Doi == "" {
 		return nil, fmt.Errorf("invalid request: DOI is required")
@@ -234,7 +236,7 @@ func (s *ArticleGrpcService) CreateArticle(ctx context.Context, request *article
 	}, nil
 }
 
-func (s *ArticleGrpcService) UpdateArticle(ctx context.Context, request *article.UpdateArticleRequest) (*article.UpdateArticleResponse, error) {
+func (s *ArticleSerivceImp) UpdateArticle(ctx context.Context, request *article.UpdateArticleRequest) (*article.UpdateArticleResponse, error) {
 	if request == nil || request.Id == 0 {
 		return nil, fmt.Errorf("invalid request: %v", request)
 	}
@@ -267,7 +269,7 @@ func (s *ArticleGrpcService) UpdateArticle(ctx context.Context, request *article
 	return &article.UpdateArticleResponse{}, nil
 }
 
-func (s *ArticleGrpcService) DeleteArticle(ctx context.Context, request *article.DeleteArticleRequest) (*article.DeleteArticleResponse, error) {
+func (s *ArticleSerivceImp) DeleteArticle(ctx context.Context, request *article.DeleteArticleRequest) (*article.DeleteArticleResponse, error) {
 	if request == nil || request.Id == 0 {
 		return nil, fmt.Errorf("invalid request: %v", request)
 	}
@@ -285,7 +287,7 @@ func (s *ArticleGrpcService) DeleteArticle(ctx context.Context, request *article
 	return &article.DeleteArticleResponse{}, nil
 }
 
-func (s *ArticleGrpcService) mustEmbedUnimplementedArticlesServiceServer() {
+func (s *ArticleSerivceImp) mustEmbedUnimplementedArticlesServiceServer() {
 	// This method is required to satisfy the interface, but it does not need to do anything.
 	// It is used to ensure that the service implements all methods of the ArticlesServiceServer interface.
 }
@@ -336,7 +338,7 @@ type CrossRefDate struct {
 	DateParts [][]int `json:"date-parts"`
 }
 
-func (s *ArticleGrpcService) fetchArticleMetadataFromDOI(doi string) (*CrossRefMessage, error) {
+func (s *ArticleSerivceImp) fetchArticleMetadataFromDOI(doi string) (*CrossRefMessage, error) {
 	url := fmt.Sprintf("https://api.crossref.org/v1/works/%s", doi)
 
 	resp, err := http.Get(url)

@@ -1,0 +1,26 @@
+{
+  "name": "nuxt-app",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "nuxt build",
+    "dev": "nuxt dev",
+    "generate": "nuxt generate",
+    "preview": "nuxt preview",
+    "postinstall": "nuxt prepare",
+    "proto:gen": "grpc_tools_node_protoc --plugin=./node_modules/.bin/protoc-gen-ts_proto --ts_proto_out=./server/proto/generated ./server/proto"
+  },
+  "dependencies": {
+    "@grpc/grpc-js": "^1.13.4",
+    "@nuxt/fonts": "0.11.4",
+    "@nuxt/icon": "1.15.0",
+    "@nuxt/image": "1.11.0",
+    "@tailwindcss/vite": "^4.1.11",
+    "grpc-tools": "^1.13.0",
+    "nuxt": "^4.0.2",
+    "tailwindcss": "^4.1.11",
+    "ts-proto": "^2.7.5",
+    "vue": "^3.5.18",
+    "vue-router": "^4.5.1"
+  }
+}
