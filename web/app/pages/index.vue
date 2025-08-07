@@ -90,38 +90,10 @@
     </section>
 
     <!-- Modals -->
-    <div v-if="showAddArticleModal" class="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4">
-      <div class="glass-elevated animate-scale-in w-full max-w-lg rounded-2xl p-6">
-        <div class="flex items-center justify-between mb-6">
-          <h2 class="text-xl font-bold text-white">Add New Article</h2>
-          <button
-            @click="showAddArticleModal = false"
-            class="glass-button p-2"
-          >
-            <Icon name="heroicons:x-mark" class="h-5 w-5" />
-          </button>
-        </div>
-        
-        <div class="mb-6">
-          <h3 class="text-sm font-medium text-gray-300 mb-3">Search by DOI</h3>
-          <div class="flex gap-2">
-            <input
-              v-model="doiSearch"
-              type="text"
-              placeholder="Enter DOI (e.g., 10.1000/xyz123)"
-              class="glass-input flex-1"
-            />
-            <button class="glass-button bg-gradient-to-r from-purple-500/20 to-blue-500/20 border-purple-300/30">
-              <Icon name="heroicons:magnifying-glass" class="h-4 w-4" />
-            </button>
-          </div>
-        </div>
-        
-        <div class="text-center p-4">
-          <p class="text-gray-400 text-sm">This is a demo. Full functionality coming soon!</p>
-        </div>
-      </div>
-    </div>
+    <AddArticleModal
+        v-if="showAddArticleModal"
+        @close="showAddArticleModal = false"
+    />
   </div>
 </template>
 

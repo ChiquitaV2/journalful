@@ -134,6 +134,7 @@ func (s *ArticleSerivceImp) CreateArticle(ctx context.Context, request *article.
 	// Attempt to fetch metadata from DOI if provided
 	if request.Doi != "" {
 		meta, err := s.fetchArticleMetadataFromDOI(request.Doi)
+		slog.Info("metadata", meta)
 		if err != nil {
 			slog.Error("failed to fetch article metadata from DOI", "doi", request.Doi, "error", err)
 			// Continue with provided request data if DOI fetch fails
@@ -181,6 +182,7 @@ func (s *ArticleSerivceImp) CreateArticle(ctx context.Context, request *article.
 		}
 	}
 
+	slog.Info("Build article data", "doi", request.Doi, "title", articleTitle, "authors", normalizedAuthors, "publicationYear", articlePublicationYear)
 	// Final validation after attempting to fetch/override
 	if articleTitle == "" || len(normalizedAuthors) == 0 || !articlePublicationYear.Valid {
 		return nil, fmt.Errorf("missing required article fields after DOI lookup and request override: title, authors, or publication year")
@@ -324,7 +326,7 @@ type CrossRefMessage struct {
 	DOI             string           `json:"DOI"`
 	Title           []string         `json:"title"`
 	Author          []CrossRefAuthor `json:"author"`
-	PublishedOnline CrossRefDate     `json:"published-online"`
+	PublishedOnline CrossRefDate     `json:"published"`
 	Abstract        string           `json:"abstract"`
 	ContainerTitle  []string         `json:"container-title"`
 }

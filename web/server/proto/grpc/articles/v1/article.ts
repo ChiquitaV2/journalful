@@ -1167,42 +1167,109 @@ export class ArticlesServiceClientImpl implements ArticlesService {
   GetArticle(request: GetArticleRequest): Promise<GetArticleResponse> {
     const data = GetArticleRequest.encode(request).finish();
     const promise = this.rpc.request(this.service, "GetArticle", data);
-    return promise.then((data) => GetArticleResponse.decode(new BinaryReader(data)));
+    return promise.then((data) => {
+      try {
+        return GetArticleResponse.decode(new BinaryReader(data));
+      } catch (error) {
+        return Promise.reject(error);
+      }
+    }).catch((error) => {
+      if (this.rpc.handleError) {
+        return Promise.reject(this.rpc.handleError(this.service, "GetArticle", error));
+      }
+      return Promise.reject(error);
+    });
   }
 
   GetArticleByDOI(request: GetArticleByDOIRequest): Promise<GetArticleByDOIResponse> {
     const data = GetArticleByDOIRequest.encode(request).finish();
     const promise = this.rpc.request(this.service, "GetArticleByDOI", data);
-    return promise.then((data) => GetArticleByDOIResponse.decode(new BinaryReader(data)));
+    return promise.then((data) => {
+      try {
+        return GetArticleByDOIResponse.decode(new BinaryReader(data));
+      } catch (error) {
+        return Promise.reject(error);
+      }
+    }).catch((error) => {
+      if (this.rpc.handleError) {
+        return Promise.reject(this.rpc.handleError(this.service, "GetArticleByDOI", error));
+      }
+      return Promise.reject(error);
+    });
   }
 
   ListArticles(request: ListArticlesRequest): Promise<ListArticlesResponse> {
     const data = ListArticlesRequest.encode(request).finish();
     const promise = this.rpc.request(this.service, "ListArticles", data);
-    return promise.then((data) => ListArticlesResponse.decode(new BinaryReader(data)));
+    return promise.then((data) => {
+      try {
+        return ListArticlesResponse.decode(new BinaryReader(data));
+      } catch (error) {
+        return Promise.reject(error);
+      }
+    }).catch((error) => {
+      if (this.rpc.handleError) {
+        return Promise.reject(this.rpc.handleError(this.service, "ListArticles", error));
+      }
+      return Promise.reject(error);
+    });
   }
 
   CreateArticle(request: CreateArticleRequest): Promise<CreateArticleResponse> {
     const data = CreateArticleRequest.encode(request).finish();
     const promise = this.rpc.request(this.service, "CreateArticle", data);
-    return promise.then((data) => CreateArticleResponse.decode(new BinaryReader(data)));
+    return promise.then((data) => {
+      try {
+        return CreateArticleResponse.decode(new BinaryReader(data));
+      } catch (error) {
+        return Promise.reject(error);
+      }
+    }).catch((error) => {
+      if (this.rpc.handleError) {
+        return Promise.reject(this.rpc.handleError(this.service, "CreateArticle", error));
+      }
+      return Promise.reject(error);
+    });
   }
 
   UpdateArticle(request: UpdateArticleRequest): Promise<UpdateArticleResponse> {
     const data = UpdateArticleRequest.encode(request).finish();
     const promise = this.rpc.request(this.service, "UpdateArticle", data);
-    return promise.then((data) => UpdateArticleResponse.decode(new BinaryReader(data)));
+    return promise.then((data) => {
+      try {
+        return UpdateArticleResponse.decode(new BinaryReader(data));
+      } catch (error) {
+        return Promise.reject(error);
+      }
+    }).catch((error) => {
+      if (this.rpc.handleError) {
+        return Promise.reject(this.rpc.handleError(this.service, "UpdateArticle", error));
+      }
+      return Promise.reject(error);
+    });
   }
 
   DeleteArticle(request: DeleteArticleRequest): Promise<DeleteArticleResponse> {
     const data = DeleteArticleRequest.encode(request).finish();
     const promise = this.rpc.request(this.service, "DeleteArticle", data);
-    return promise.then((data) => DeleteArticleResponse.decode(new BinaryReader(data)));
+    return promise.then((data) => {
+      try {
+        return DeleteArticleResponse.decode(new BinaryReader(data));
+      } catch (error) {
+        return Promise.reject(error);
+      }
+    }).catch((error) => {
+      if (this.rpc.handleError) {
+        return Promise.reject(this.rpc.handleError(this.service, "DeleteArticle", error));
+      }
+      return Promise.reject(error);
+    });
   }
 }
 
 interface Rpc {
   request(service: string, method: string, data: Uint8Array): Promise<Uint8Array>;
+  handleError?(service: string, method: string, error: globalThis.Error): globalThis.Error;
 }
 
 type Builtin = Date | Function | Uint8Array | string | number | boolean | undefined;

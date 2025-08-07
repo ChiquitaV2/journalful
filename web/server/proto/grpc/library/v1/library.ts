@@ -727,18 +727,41 @@ export class LibraryServiceClientImpl implements LibraryService {
   SaveArticleToLibrary(request: SaveArticleToLibraryRequest): Promise<SaveArticleToLibraryResponse> {
     const data = SaveArticleToLibraryRequest.encode(request).finish();
     const promise = this.rpc.request(this.service, "SaveArticleToLibrary", data);
-    return promise.then((data) => SaveArticleToLibraryResponse.decode(new BinaryReader(data)));
+    return promise.then((data) => {
+      try {
+        return SaveArticleToLibraryResponse.decode(new BinaryReader(data));
+      } catch (error) {
+        return Promise.reject(error);
+      }
+    }).catch((error) => {
+      if (this.rpc.handleError) {
+        return Promise.reject(this.rpc.handleError(this.service, "SaveArticleToLibrary", error));
+      }
+      return Promise.reject(error);
+    });
   }
 
   GetUserLibrary(request: GetUserLibraryRequest): Promise<GetUserLibraryResponse> {
     const data = GetUserLibraryRequest.encode(request).finish();
     const promise = this.rpc.request(this.service, "GetUserLibrary", data);
-    return promise.then((data) => GetUserLibraryResponse.decode(new BinaryReader(data)));
+    return promise.then((data) => {
+      try {
+        return GetUserLibraryResponse.decode(new BinaryReader(data));
+      } catch (error) {
+        return Promise.reject(error);
+      }
+    }).catch((error) => {
+      if (this.rpc.handleError) {
+        return Promise.reject(this.rpc.handleError(this.service, "GetUserLibrary", error));
+      }
+      return Promise.reject(error);
+    });
   }
 }
 
 interface Rpc {
   request(service: string, method: string, data: Uint8Array): Promise<Uint8Array>;
+  handleError?(service: string, method: string, error: globalThis.Error): globalThis.Error;
 }
 
 type Builtin = Date | Function | Uint8Array | string | number | boolean | undefined;

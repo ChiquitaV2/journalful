@@ -264,6 +264,11 @@
 
     <!-- Mobile Bottom Navigation -->
     <MobileBottomNav />
+    <AddArticleModal
+        v-if="showAddModal"
+        @close="showAddModal = false"
+        @article-added="handleArticleAdded"
+    />
 
     <!-- Floating Action Button -->
     <div class="fixed bottom-20 right-6 z-20 md:bottom-6">
@@ -434,7 +439,7 @@ const clearFilters = () => {
 }
 
 const navigateToArticle = (id) => {
-  router.push(`/articles/${id}`)
+  navigateTo(`/articles/${id}`)
 }
 
 const updateArticleStatus = async (article, newStatus) => {
@@ -510,11 +515,24 @@ const removeArticle = async (article) => {
   }
 }
 
+const showAddModal = ref(false)
 const addArticle = () => {
   // Open add article modal or navigate to add page
-  router.push(`/libraries/${library.value.id}/add-article`)
+  // router.push(`/libraries/${library.value.id}/add-article`)
+  showAddModal.value = true
 }
+const handleArticleAdded = (article) => {
+  //make a call to /api/libraries/{id}/articles
+  const response = $fetch(`/api/libraries/${library.value.id}/articles`, {
+    method: 'POST',
+    body: {
+      articleId: article.id
+    }
+  })
+  library.value.articles.push(article)
+  library.value.articleCount = library.value.articles.length
 
+}
 const editLibrary = () => {
   router.push(`/libraries/${library.value.id}/edit`)
 }

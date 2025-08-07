@@ -1,6 +1,7 @@
 import {Client, credentials} from "@grpc/grpc-js";
 import type {UnaryCallback} from "@grpc/grpc-js/build/src/client";
 import {ArticlesServiceClientImpl} from "~~/server/proto/grpc/articles/v1/article";
+import {CallMetadataGenerator} from "@grpc/grpc-js/src/call-credentials";
 
 export interface Rpc {
     request(service: string, method: string, data: Uint8Array): Promise<Uint8Array>;
@@ -9,6 +10,11 @@ type RpcImpl = (service: string, method: string, data: Uint8Array) => Promise<Ui
 
 export default defineNitroPlugin(nitroApp => {
     const config = useRuntimeConfig()
+    const channelCredentials = credentials.createInsecure()
+    const metaCallback: CallMetadataGenerator = (options, callback) => {
+    }
+
+    // credentials.createFromMetadataGenerator()
     const conn = new Client(
         config.backendURL,
         credentials.createInsecure()

@@ -1,3 +1,6 @@
-export default defineEventHandler(event => {
-    return event.context.articlesSvr.ListArticles({})
+import {useServices} from "~~/server/proto/useServices";
+
+export default defineEventHandler(async event => {
+    const articlesSvr = await useServices().getArticlesServiceClient(event)
+    return articlesSvr.ListArticles({})
 })

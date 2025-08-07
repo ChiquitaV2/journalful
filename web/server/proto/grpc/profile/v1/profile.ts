@@ -851,36 +851,92 @@ export class ProfileServiceClientImpl implements ProfileService {
   GetProfile(request: GetProfileRequest): Promise<GetProfileResponse> {
     const data = GetProfileRequest.encode(request).finish();
     const promise = this.rpc.request(this.service, "GetProfile", data);
-    return promise.then((data) => GetProfileResponse.decode(new BinaryReader(data)));
+    return promise.then((data) => {
+      try {
+        return GetProfileResponse.decode(new BinaryReader(data));
+      } catch (error) {
+        return Promise.reject(error);
+      }
+    }).catch((error) => {
+      if (this.rpc.handleError) {
+        return Promise.reject(this.rpc.handleError(this.service, "GetProfile", error));
+      }
+      return Promise.reject(error);
+    });
   }
 
   ListProfiles(request: ListProfilesRequest): Promise<ListProfilesResponse> {
     const data = ListProfilesRequest.encode(request).finish();
     const promise = this.rpc.request(this.service, "ListProfiles", data);
-    return promise.then((data) => ListProfilesResponse.decode(new BinaryReader(data)));
+    return promise.then((data) => {
+      try {
+        return ListProfilesResponse.decode(new BinaryReader(data));
+      } catch (error) {
+        return Promise.reject(error);
+      }
+    }).catch((error) => {
+      if (this.rpc.handleError) {
+        return Promise.reject(this.rpc.handleError(this.service, "ListProfiles", error));
+      }
+      return Promise.reject(error);
+    });
   }
 
   CreateProfile(request: CreateProfileRequest): Promise<CreateProfileResponse> {
     const data = CreateProfileRequest.encode(request).finish();
     const promise = this.rpc.request(this.service, "CreateProfile", data);
-    return promise.then((data) => CreateProfileResponse.decode(new BinaryReader(data)));
+    return promise.then((data) => {
+      try {
+        return CreateProfileResponse.decode(new BinaryReader(data));
+      } catch (error) {
+        return Promise.reject(error);
+      }
+    }).catch((error) => {
+      if (this.rpc.handleError) {
+        return Promise.reject(this.rpc.handleError(this.service, "CreateProfile", error));
+      }
+      return Promise.reject(error);
+    });
   }
 
   UpdateProfile(request: UpdateProfileRequest): Promise<UpdateProfileResponse> {
     const data = UpdateProfileRequest.encode(request).finish();
     const promise = this.rpc.request(this.service, "UpdateProfile", data);
-    return promise.then((data) => UpdateProfileResponse.decode(new BinaryReader(data)));
+    return promise.then((data) => {
+      try {
+        return UpdateProfileResponse.decode(new BinaryReader(data));
+      } catch (error) {
+        return Promise.reject(error);
+      }
+    }).catch((error) => {
+      if (this.rpc.handleError) {
+        return Promise.reject(this.rpc.handleError(this.service, "UpdateProfile", error));
+      }
+      return Promise.reject(error);
+    });
   }
 
   DeleteProfile(request: DeleteProfileRequest): Promise<DeleteProfileResponse> {
     const data = DeleteProfileRequest.encode(request).finish();
     const promise = this.rpc.request(this.service, "DeleteProfile", data);
-    return promise.then((data) => DeleteProfileResponse.decode(new BinaryReader(data)));
+    return promise.then((data) => {
+      try {
+        return DeleteProfileResponse.decode(new BinaryReader(data));
+      } catch (error) {
+        return Promise.reject(error);
+      }
+    }).catch((error) => {
+      if (this.rpc.handleError) {
+        return Promise.reject(this.rpc.handleError(this.service, "DeleteProfile", error));
+      }
+      return Promise.reject(error);
+    });
   }
 }
 
 interface Rpc {
   request(service: string, method: string, data: Uint8Array): Promise<Uint8Array>;
+  handleError?(service: string, method: string, error: globalThis.Error): globalThis.Error;
 }
 
 type Builtin = Date | Function | Uint8Array | string | number | boolean | undefined;

@@ -1,4 +1,4 @@
-import { ReadingStatus } from '../types'
+import { ReadingStatus } from '#shared/types'
 
 /**
  * Status and progress utility functions

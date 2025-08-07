@@ -929,42 +929,109 @@ export class AuthorServiceClientImpl implements AuthorService {
   GetAuthor(request: GetAuthorRequest): Promise<GetAuthorResponse> {
     const data = GetAuthorRequest.encode(request).finish();
     const promise = this.rpc.request(this.service, "GetAuthor", data);
-    return promise.then((data) => GetAuthorResponse.decode(new BinaryReader(data)));
+    return promise.then((data) => {
+      try {
+        return GetAuthorResponse.decode(new BinaryReader(data));
+      } catch (error) {
+        return Promise.reject(error);
+      }
+    }).catch((error) => {
+      if (this.rpc.handleError) {
+        return Promise.reject(this.rpc.handleError(this.service, "GetAuthor", error));
+      }
+      return Promise.reject(error);
+    });
   }
 
   GetAuthorByProfileID(request: GetAuthorByProfileIDRequest): Promise<GetAuthorByProfileIDResponse> {
     const data = GetAuthorByProfileIDRequest.encode(request).finish();
     const promise = this.rpc.request(this.service, "GetAuthorByProfileID", data);
-    return promise.then((data) => GetAuthorByProfileIDResponse.decode(new BinaryReader(data)));
+    return promise.then((data) => {
+      try {
+        return GetAuthorByProfileIDResponse.decode(new BinaryReader(data));
+      } catch (error) {
+        return Promise.reject(error);
+      }
+    }).catch((error) => {
+      if (this.rpc.handleError) {
+        return Promise.reject(this.rpc.handleError(this.service, "GetAuthorByProfileID", error));
+      }
+      return Promise.reject(error);
+    });
   }
 
   ListAuthors(request: ListAuthorsRequest): Promise<ListAuthorsResponse> {
     const data = ListAuthorsRequest.encode(request).finish();
     const promise = this.rpc.request(this.service, "ListAuthors", data);
-    return promise.then((data) => ListAuthorsResponse.decode(new BinaryReader(data)));
+    return promise.then((data) => {
+      try {
+        return ListAuthorsResponse.decode(new BinaryReader(data));
+      } catch (error) {
+        return Promise.reject(error);
+      }
+    }).catch((error) => {
+      if (this.rpc.handleError) {
+        return Promise.reject(this.rpc.handleError(this.service, "ListAuthors", error));
+      }
+      return Promise.reject(error);
+    });
   }
 
   CreateAuthor(request: CreateAuthorRequest): Promise<CreateAuthorResponse> {
     const data = CreateAuthorRequest.encode(request).finish();
     const promise = this.rpc.request(this.service, "CreateAuthor", data);
-    return promise.then((data) => CreateAuthorResponse.decode(new BinaryReader(data)));
+    return promise.then((data) => {
+      try {
+        return CreateAuthorResponse.decode(new BinaryReader(data));
+      } catch (error) {
+        return Promise.reject(error);
+      }
+    }).catch((error) => {
+      if (this.rpc.handleError) {
+        return Promise.reject(this.rpc.handleError(this.service, "CreateAuthor", error));
+      }
+      return Promise.reject(error);
+    });
   }
 
   UpdateAuthor(request: UpdateAuthorRequest): Promise<UpdateAuthorResponse> {
     const data = UpdateAuthorRequest.encode(request).finish();
     const promise = this.rpc.request(this.service, "UpdateAuthor", data);
-    return promise.then((data) => UpdateAuthorResponse.decode(new BinaryReader(data)));
+    return promise.then((data) => {
+      try {
+        return UpdateAuthorResponse.decode(new BinaryReader(data));
+      } catch (error) {
+        return Promise.reject(error);
+      }
+    }).catch((error) => {
+      if (this.rpc.handleError) {
+        return Promise.reject(this.rpc.handleError(this.service, "UpdateAuthor", error));
+      }
+      return Promise.reject(error);
+    });
   }
 
   DeleteAuthor(request: DeleteAuthorRequest): Promise<DeleteAuthorResponse> {
     const data = DeleteAuthorRequest.encode(request).finish();
     const promise = this.rpc.request(this.service, "DeleteAuthor", data);
-    return promise.then((data) => DeleteAuthorResponse.decode(new BinaryReader(data)));
+    return promise.then((data) => {
+      try {
+        return DeleteAuthorResponse.decode(new BinaryReader(data));
+      } catch (error) {
+        return Promise.reject(error);
+      }
+    }).catch((error) => {
+      if (this.rpc.handleError) {
+        return Promise.reject(this.rpc.handleError(this.service, "DeleteAuthor", error));
+      }
+      return Promise.reject(error);
+    });
   }
 }
 
 interface Rpc {
   request(service: string, method: string, data: Uint8Array): Promise<Uint8Array>;
+  handleError?(service: string, method: string, error: globalThis.Error): globalThis.Error;
 }
 
 type Builtin = Date | Function | Uint8Array | string | number | boolean | undefined;

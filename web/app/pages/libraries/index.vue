@@ -117,7 +117,7 @@
 </template>
 
 <script setup>
-import { ReadingStatus } from '~~/types'
+import { ReadingStatus } from '#shared/types'
 
 // Set layout and configure header
 definePageMeta({

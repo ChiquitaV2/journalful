@@ -25,10 +25,10 @@
               type="text"
               placeholder="Enter DOI (e.g., 10.1000/xyz123)"
               class="glass-input flex-1"
-              @keyup.enter="searchByDOI"
+              @keyup.enter="search"
             />
             <button
-              @click="searchByDOI"
+              @click="search"
               :disabled="isSearching || !doiSearch.trim()"
               class="glass-button bg-gradient-to-r from-purple-500/20 to-blue-500/20 border-purple-300/30 disabled:opacity-50"
             >
@@ -46,7 +46,7 @@
             <div class="flex items-start justify-between">
               <div class="flex-1">
                 <h4 class="font-medium text-white mb-1">{{ searchResult.title }}</h4>
-                <p class="text-sm text-gray-400 mb-2">{{ formatAuthors(searchResult.authors) }}</p>
+                <p class="text-sm text-gray-400 mb-2">{{ formatArticleAuthors(searchResult.authors) }}</p>
                 <div class="flex items-center space-x-2 text-xs text-gray-500">
                   <span v-if="searchResult.publicationYear">{{ searchResult.publicationYear }}</span>
                   <span v-if="searchResult.journalName">• {{ searchResult.journalName }}</span>
@@ -67,6 +67,9 @@
             <p class="text-sm text-gray-400">Article not found. You can add it manually below.</p>
           </div>
         </div>
+
+        <template v-if="manual">
+
 
         <!-- Divider -->
         <div class="flex items-center my-6">
@@ -211,16 +214,26 @@
             </button>
           </div>
         </form>
+        </template>
       </div>
     </div>
   </div>
 </template>
 
 <script setup>
-import { ReadingStatus } from '~~/types'
+import { ReadingStatus } from '#shared/types'
+import {useFormatters} from "~/composables/useFormatters.js";
+import {useSearch} from "~/composables/useSearch.js";
 
 const emit = defineEmits(['close', 'article-added'])
 const { showSuccess, showError } = useNotifications()
+
+defineProps({
+  manual: {
+    type: Boolean,
+    default: false
+  }
+})
 
 // DOI Search
 const doiSearch = ref('')
@@ -241,8 +254,8 @@ const manualArticle = ref({
   readingStatus: ReadingStatus.READING_STATUS_TO_READ,
   notes: ''
 })
-
-const searchByDOI = async () => {
+const { searchByDOI } = useSearch()
+const search = async () => {
   if (!doiSearch.value.trim()) return
   
   isSearching.value = true
@@ -251,23 +264,24 @@ const searchByDOI = async () => {
   
   try {
     // Mock API call - replace with actual API
-    await new Promise(resolve => setTimeout(resolve, 1000))
-    
+    // await new Promise(resolve => setTimeout(resolve, 1000))
+    searchResult.value = (await searchByDOI(doiSearch.value)).article
+
     // Mock successful search result
-    if (doiSearch.value.includes('10.')) {
-      searchResult.value = {
-        id: Date.now(),
-        title: 'Advances in Machine Learning for Academic Research',
-        doi: doiSearch.value,
-        authors: [
-          { id: 1, name: 'Dr. Jane Smith', profileId: 1 },
-          { id: 2, name: 'Prof. John Doe', profileId: 2 }
-        ],
-        publicationYear: 2024,
-        journalName: 'Nature Machine Intelligence',
-        abstract: 'This paper presents novel approaches to machine learning applications in academic research...'
-      }
-    }
+    // if (doiSearch.value.includes('10.')) {
+    //   searchResult.value = {
+    //     id: Date.now(),
+    //     title: 'Advances in Machine Learning for Academic Research',
+    //     doi: doiSearch.value,
+    //     authors: [
+    //       { id: 1, name: 'Dr. Jane Smith', profileId: 1 },
+    //       { id: 2, name: 'Prof. John Doe', profileId: 2 }
+    //     ],
+    //     publicationYear: 2024,
+    //     journalName: 'Nature Machine Intelligence',
+    //     abstract: 'This paper presents novel approaches to machine learning applications in academic research...'
+    //   }
+    // }
   } catch (error) {
     showError('Failed to search for article. Please try again.')
   } finally {
@@ -326,12 +340,8 @@ const addManualArticle = async () => {
   }
 }
 
-const formatAuthors = (authors) => {
-  if (!authors || authors.length === 0) return 'Unknown Author'
-  if (authors.length === 1) return authors[0].name
-  if (authors.length === 2) return `${authors[0].name} & ${authors[1].name}`
-  return `${authors[0].name} et al.`
-}
+const { formatArticleAuthors } = useFormatters()
+
 
 // Reset form when modal opens
 onMounted(() => {

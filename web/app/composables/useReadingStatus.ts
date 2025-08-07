@@ -1,4 +1,4 @@
-import { ReadingStatus } from '../../types'
+import { ReadingStatus } from '#shared/types'
 import { getStatusLabel, getStatusColor, getStatusIcon, calculateProgress, getNextStatus } from '../../utils'
 
 /**

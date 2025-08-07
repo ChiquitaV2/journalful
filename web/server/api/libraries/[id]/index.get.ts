@@ -1,4 +1,4 @@
-import { generateMockLibrary } from '../mock/data'
+import { generateMockLibrary } from '../../mock/data'
 
 export default defineEventHandler(event => {
   const id = Number(event.context.params?.id)

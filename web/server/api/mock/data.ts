@@ -1,4 +1,4 @@
-import { ReadingStatus } from '../../../types'
+import { ReadingStatus } from '#shared/types'
 
 /**
  * Mock data generator for development and testing

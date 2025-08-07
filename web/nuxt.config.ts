@@ -28,7 +28,7 @@ export default defineNuxtConfig({
   },
   ssr: true,
   typescript: {
-    typeCheck: false
+    typeCheck: true
   },
   nitro: {
     compressPublicAssets: true,

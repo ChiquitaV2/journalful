@@ -187,7 +187,7 @@
 </template>
 
 <script setup>
-import { ReadingStatus } from '~~/types'
+import { ReadingStatus } from '#shared/types'
 
 const props = defineProps({
   library: {
