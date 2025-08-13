@@ -10,8 +10,9 @@ generate-proto-server:
 generate-proto-client:
 	protoc \
 	  --proto_path=./api \
-	  --plugin=packages/grpc-client/node_modules/.bin/protoc-gen-ts_proto \
-	  --ts_proto_out=./app/frontend/shared/grpc \
+	  --plugin=web/node_modules/.bin/protoc-gen-ts_proto \
+	  --ts_proto_opt=rpcErrorHandler=true \
+      --ts_proto_out=./web/server/proto/grpc \
 	  api/**/v1/*.proto
 
 generate-sql:

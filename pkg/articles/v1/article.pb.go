@@ -28,12 +28,13 @@ type Article struct {
 	Id              int64                  `protobuf:"varint,1,opt,name=id,proto3" json:"id,omitempty"`
 	Doi             string                 `protobuf:"bytes,2,opt,name=doi,proto3" json:"doi,omitempty"`
 	Title           string                 `protobuf:"bytes,3,opt,name=title,proto3" json:"title,omitempty"`
-	Authors         []*v1.Author           `protobuf:"bytes,4,rep,name=authors,proto3" json:"authors,omitempty"` // List of authors
-	Abstract        *string                `protobuf:"bytes,5,opt,name=abstract,proto3,oneof" json:"abstract,omitempty"`
-	PublicationYear *int32                 `protobuf:"varint,6,opt,name=publication_year,json=publicationYear,proto3,oneof" json:"publication_year,omitempty"`
-	JournalName     *string                `protobuf:"bytes,7,opt,name=journal_name,json=journalName,proto3,oneof" json:"journal_name,omitempty"`
-	CreatedAt       *timestamppb.Timestamp `protobuf:"bytes,8,opt,name=created_at,json=createdAt,proto3" json:"created_at,omitempty"`
-	UpdatedAt       *timestamppb.Timestamp `protobuf:"bytes,9,opt,name=updated_at,json=updatedAt,proto3" json:"updated_at,omitempty"`
+	Url             string                 `protobuf:"bytes,4,opt,name=url,proto3" json:"url,omitempty"`
+	Authors         []*v1.Author           `protobuf:"bytes,5,rep,name=authors,proto3" json:"authors,omitempty"` // List of authors
+	Abstract        *string                `protobuf:"bytes,6,opt,name=abstract,proto3,oneof" json:"abstract,omitempty"`
+	PublicationYear *int32                 `protobuf:"varint,7,opt,name=publication_year,json=publicationYear,proto3,oneof" json:"publication_year,omitempty"`
+	JournalName     *string                `protobuf:"bytes,8,opt,name=journal_name,json=journalName,proto3,oneof" json:"journal_name,omitempty"`
+	CreatedAt       *timestamppb.Timestamp `protobuf:"bytes,9,opt,name=created_at,json=createdAt,proto3" json:"created_at,omitempty"`
+	UpdatedAt       *timestamppb.Timestamp `protobuf:"bytes,10,opt,name=updated_at,json=updatedAt,proto3" json:"updated_at,omitempty"`
 	unknownFields   protoimpl.UnknownFields
 	sizeCache       protoimpl.SizeCache
 }
@@ -85,6 +86,13 @@ func (x *Article) GetDoi() string {
 func (x *Article) GetTitle() string {
 	if x != nil {
 		return x.Title
+	}
+	return ""
+}
+
+func (x *Article) GetUrl() string {
+	if x != nil {
+		return x.Url
 	}
 	return ""
 }
@@ -735,19 +743,21 @@ var File_articles_v1_article_proto protoreflect.FileDescriptor
 
 const file_articles_v1_article_proto_rawDesc = "" +
 	"\n" +
-	"\x19articles/v1/article.proto\x12\x0fapi.articles.v1\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x17profile/v1/author.proto\"\x95\x03\n" +
+	"\x19articles/v1/article.proto\x12\x0fapi.articles.v1\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x17profile/v1/author.proto\"\xa7\x03\n" +
 	"\aArticle\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\x03R\x02id\x12\x10\n" +
 	"\x03doi\x18\x02 \x01(\tR\x03doi\x12\x14\n" +
-	"\x05title\x18\x03 \x01(\tR\x05title\x120\n" +
-	"\aauthors\x18\x04 \x03(\v2\x16.api.profile.v1.AuthorR\aauthors\x12\x1f\n" +
-	"\babstract\x18\x05 \x01(\tH\x00R\babstract\x88\x01\x01\x12.\n" +
-	"\x10publication_year\x18\x06 \x01(\x05H\x01R\x0fpublicationYear\x88\x01\x01\x12&\n" +
-	"\fjournal_name\x18\a \x01(\tH\x02R\vjournalName\x88\x01\x01\x129\n" +
+	"\x05title\x18\x03 \x01(\tR\x05title\x12\x10\n" +
+	"\x03url\x18\x04 \x01(\tR\x03url\x120\n" +
+	"\aauthors\x18\x05 \x03(\v2\x16.api.profile.v1.AuthorR\aauthors\x12\x1f\n" +
+	"\babstract\x18\x06 \x01(\tH\x00R\babstract\x88\x01\x01\x12.\n" +
+	"\x10publication_year\x18\a \x01(\x05H\x01R\x0fpublicationYear\x88\x01\x01\x12&\n" +
+	"\fjournal_name\x18\b \x01(\tH\x02R\vjournalName\x88\x01\x01\x129\n" +
 	"\n" +
-	"created_at\x18\b \x01(\v2\x1a.google.protobuf.TimestampR\tcreatedAt\x129\n" +
+	"created_at\x18\t \x01(\v2\x1a.google.protobuf.TimestampR\tcreatedAt\x129\n" +
 	"\n" +
-	"updated_at\x18\t \x01(\v2\x1a.google.protobuf.TimestampR\tupdatedAtB\v\n" +
+	"updated_at\x18\n" +
+	" \x01(\v2\x1a.google.protobuf.TimestampR\tupdatedAtB\v\n" +
 	"\t_abstractB\x13\n" +
 	"\x11_publication_yearB\x0f\n" +
 	"\r_journal_name\"#\n" +

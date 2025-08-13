@@ -80,11 +80,13 @@ func (ReadingStatus) EnumDescriptor() ([]byte, []int) {
 type Library struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Id            int64                  `protobuf:"varint,1,opt,name=id,proto3" json:"id,omitempty"`
-	UserId        int64                  `protobuf:"varint,2,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
-	Name          *string                `protobuf:"bytes,3,opt,name=name,proto3,oneof" json:"name,omitempty"`
-	Articles      []*LibraryArticle      `protobuf:"bytes,4,rep,name=articles,proto3" json:"articles,omitempty"`
-	CreatedAt     *timestamppb.Timestamp `protobuf:"bytes,5,opt,name=created_at,json=createdAt,proto3" json:"created_at,omitempty"`
-	UpdatedAt     *timestamppb.Timestamp `protobuf:"bytes,6,opt,name=updated_at,json=updatedAt,proto3" json:"updated_at,omitempty"`
+	OwnerId       int64                  `protobuf:"varint,2,opt,name=owner_id,json=ownerId,proto3" json:"owner_id,omitempty"`
+	Name          string                 `protobuf:"bytes,3,opt,name=name,proto3" json:"name,omitempty"`
+	Description   *string                `protobuf:"bytes,5,opt,name=description,proto3,oneof" json:"description,omitempty"`
+	IsPublic      bool                   `protobuf:"varint,6,opt,name=isPublic,proto3" json:"isPublic,omitempty"`
+	Articles      []*LibraryArticle      `protobuf:"bytes,7,rep,name=articles,proto3" json:"articles,omitempty"`
+	CreatedAt     *timestamppb.Timestamp `protobuf:"bytes,8,opt,name=created_at,json=createdAt,proto3" json:"created_at,omitempty"`
+	UpdatedAt     *timestamppb.Timestamp `protobuf:"bytes,9,opt,name=updated_at,json=updatedAt,proto3" json:"updated_at,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -126,18 +128,32 @@ func (x *Library) GetId() int64 {
 	return 0
 }
 
-func (x *Library) GetUserId() int64 {
+func (x *Library) GetOwnerId() int64 {
 	if x != nil {
-		return x.UserId
+		return x.OwnerId
 	}
 	return 0
 }
 
 func (x *Library) GetName() string {
-	if x != nil && x.Name != nil {
-		return *x.Name
+	if x != nil {
+		return x.Name
 	}
 	return ""
+}
+
+func (x *Library) GetDescription() string {
+	if x != nil && x.Description != nil {
+		return *x.Description
+	}
+	return ""
+}
+
+func (x *Library) GetIsPublic() bool {
+	if x != nil {
+		return x.IsPublic
+	}
+	return false
 }
 
 func (x *Library) GetArticles() []*LibraryArticle {
@@ -166,11 +182,14 @@ type LibraryArticle struct {
 	Id              int64                  `protobuf:"varint,1,opt,name=id,proto3" json:"id,omitempty"`
 	ArticleId       int64                  `protobuf:"varint,2,opt,name=article_id,json=articleId,proto3" json:"article_id,omitempty"`
 	ReadingStatus   ReadingStatus          `protobuf:"varint,3,opt,name=reading_status,json=readingStatus,proto3,enum=api.library.v1.ReadingStatus" json:"reading_status,omitempty"`
-	AddedAt         *timestamppb.Timestamp `protobuf:"bytes,4,opt,name=added_at,json=addedAt,proto3" json:"added_at,omitempty"`
-	Notes           *string                `protobuf:"bytes,5,opt,name=notes,proto3,oneof" json:"notes,omitempty"`
-	ArticleTitle    string                 `protobuf:"bytes,6,opt,name=article_title,json=articleTitle,proto3" json:"article_title,omitempty"`
-	Doi             string                 `protobuf:"bytes,7,opt,name=doi,proto3" json:"doi,omitempty"`
-	PublicationYear int32                  `protobuf:"varint,8,opt,name=publication_year,json=publicationYear,proto3" json:"publication_year,omitempty"`
+	ReadingProgress int32                  `protobuf:"varint,4,opt,name=reading_progress,json=readingProgress,proto3" json:"reading_progress,omitempty"`
+	DateAdded       *timestamppb.Timestamp `protobuf:"bytes,5,opt,name=dateAdded,proto3" json:"dateAdded,omitempty"`
+	DateCompleted   *timestamppb.Timestamp `protobuf:"bytes,6,opt,name=dateCompleted,proto3" json:"dateCompleted,omitempty"`
+	Notes           *string                `protobuf:"bytes,7,opt,name=notes,proto3,oneof" json:"notes,omitempty"`
+	ArticleTitle    string                 `protobuf:"bytes,8,opt,name=article_title,json=articleTitle,proto3" json:"article_title,omitempty"`
+	Doi             string                 `protobuf:"bytes,9,opt,name=doi,proto3" json:"doi,omitempty"`
+	PublicationYear int32                  `protobuf:"varint,10,opt,name=publication_year,json=publicationYear,proto3" json:"publication_year,omitempty"`
+	IsFavorite      bool                   `protobuf:"varint,11,opt,name=isFavorite,proto3" json:"isFavorite,omitempty"`
 	unknownFields   protoimpl.UnknownFields
 	sizeCache       protoimpl.SizeCache
 }
@@ -226,9 +245,23 @@ func (x *LibraryArticle) GetReadingStatus() ReadingStatus {
 	return ReadingStatus_READING_STATUS_UNSPECIFIED
 }
 
-func (x *LibraryArticle) GetAddedAt() *timestamppb.Timestamp {
+func (x *LibraryArticle) GetReadingProgress() int32 {
 	if x != nil {
-		return x.AddedAt
+		return x.ReadingProgress
+	}
+	return 0
+}
+
+func (x *LibraryArticle) GetDateAdded() *timestamppb.Timestamp {
+	if x != nil {
+		return x.DateAdded
+	}
+	return nil
+}
+
+func (x *LibraryArticle) GetDateCompleted() *timestamppb.Timestamp {
+	if x != nil {
+		return x.DateCompleted
 	}
 	return nil
 }
@@ -259,6 +292,13 @@ func (x *LibraryArticle) GetPublicationYear() int32 {
 		return x.PublicationYear
 	}
 	return 0
+}
+
+func (x *LibraryArticle) GetIsFavorite() bool {
+	if x != nil {
+		return x.IsFavorite
+	}
+	return false
 }
 
 type SaveArticleToLibraryRequest struct {
@@ -418,10 +458,11 @@ func (x *GetUserLibraryRequest) GetUserId() int64 {
 }
 
 type GetUserLibraryResponse struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Libraries     []*Library             `protobuf:"bytes,1,rep,name=libraries,proto3" json:"libraries,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
+	state            protoimpl.MessageState `protogen:"open.v1"`
+	DefaultLibrary   *Library               `protobuf:"bytes,1,opt,name=defaultLibrary,proto3" json:"defaultLibrary,omitempty"`
+	PrivateLibraries []*Library             `protobuf:"bytes,2,rep,name=privateLibraries,proto3" json:"privateLibraries,omitempty"`
+	unknownFields    protoimpl.UnknownFields
+	sizeCache        protoimpl.SizeCache
 }
 
 func (x *GetUserLibraryResponse) Reset() {
@@ -454,9 +495,16 @@ func (*GetUserLibraryResponse) Descriptor() ([]byte, []int) {
 	return file_library_v1_library_proto_rawDescGZIP(), []int{5}
 }
 
-func (x *GetUserLibraryResponse) GetLibraries() []*Library {
+func (x *GetUserLibraryResponse) GetDefaultLibrary() *Library {
 	if x != nil {
-		return x.Libraries
+		return x.DefaultLibrary
+	}
+	return nil
+}
+
+func (x *GetUserLibraryResponse) GetPrivateLibraries() []*Library {
+	if x != nil {
+		return x.PrivateLibraries
 	}
 	return nil
 }
@@ -465,27 +513,35 @@ var File_library_v1_library_proto protoreflect.FileDescriptor
 
 const file_library_v1_library_proto_rawDesc = "" +
 	"\n" +
-	"\x18library/v1/library.proto\x12\x0eapi.library.v1\x1a\x1fgoogle/protobuf/timestamp.proto\"\x86\x02\n" +
+	"\x18library/v1/library.proto\x12\x0eapi.library.v1\x1a\x1fgoogle/protobuf/timestamp.proto\"\xcd\x02\n" +
 	"\aLibrary\x12\x0e\n" +
-	"\x02id\x18\x01 \x01(\x03R\x02id\x12\x17\n" +
-	"\auser_id\x18\x02 \x01(\x03R\x06userId\x12\x17\n" +
-	"\x04name\x18\x03 \x01(\tH\x00R\x04name\x88\x01\x01\x12:\n" +
-	"\barticles\x18\x04 \x03(\v2\x1e.api.library.v1.LibraryArticleR\barticles\x129\n" +
+	"\x02id\x18\x01 \x01(\x03R\x02id\x12\x19\n" +
+	"\bowner_id\x18\x02 \x01(\x03R\aownerId\x12\x12\n" +
+	"\x04name\x18\x03 \x01(\tR\x04name\x12%\n" +
+	"\vdescription\x18\x05 \x01(\tH\x00R\vdescription\x88\x01\x01\x12\x1a\n" +
+	"\bisPublic\x18\x06 \x01(\bR\bisPublic\x12:\n" +
+	"\barticles\x18\a \x03(\v2\x1e.api.library.v1.LibraryArticleR\barticles\x129\n" +
 	"\n" +
-	"created_at\x18\x05 \x01(\v2\x1a.google.protobuf.TimestampR\tcreatedAt\x129\n" +
+	"created_at\x18\b \x01(\v2\x1a.google.protobuf.TimestampR\tcreatedAt\x129\n" +
 	"\n" +
-	"updated_at\x18\x06 \x01(\v2\x1a.google.protobuf.TimestampR\tupdatedAtB\a\n" +
-	"\x05_name\"\xc3\x02\n" +
+	"updated_at\x18\t \x01(\v2\x1a.google.protobuf.TimestampR\tupdatedAtB\x0e\n" +
+	"\f_description\"\xd3\x03\n" +
 	"\x0eLibraryArticle\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\x03R\x02id\x12\x1d\n" +
 	"\n" +
 	"article_id\x18\x02 \x01(\x03R\tarticleId\x12D\n" +
-	"\x0ereading_status\x18\x03 \x01(\x0e2\x1d.api.library.v1.ReadingStatusR\rreadingStatus\x125\n" +
-	"\badded_at\x18\x04 \x01(\v2\x1a.google.protobuf.TimestampR\aaddedAt\x12\x19\n" +
-	"\x05notes\x18\x05 \x01(\tH\x00R\x05notes\x88\x01\x01\x12#\n" +
-	"\rarticle_title\x18\x06 \x01(\tR\farticleTitle\x12\x10\n" +
-	"\x03doi\x18\a \x01(\tR\x03doi\x12)\n" +
-	"\x10publication_year\x18\b \x01(\x05R\x0fpublicationYearB\b\n" +
+	"\x0ereading_status\x18\x03 \x01(\x0e2\x1d.api.library.v1.ReadingStatusR\rreadingStatus\x12)\n" +
+	"\x10reading_progress\x18\x04 \x01(\x05R\x0freadingProgress\x128\n" +
+	"\tdateAdded\x18\x05 \x01(\v2\x1a.google.protobuf.TimestampR\tdateAdded\x12@\n" +
+	"\rdateCompleted\x18\x06 \x01(\v2\x1a.google.protobuf.TimestampR\rdateCompleted\x12\x19\n" +
+	"\x05notes\x18\a \x01(\tH\x00R\x05notes\x88\x01\x01\x12#\n" +
+	"\rarticle_title\x18\b \x01(\tR\farticleTitle\x12\x10\n" +
+	"\x03doi\x18\t \x01(\tR\x03doi\x12)\n" +
+	"\x10publication_year\x18\n" +
+	" \x01(\x05R\x0fpublicationYear\x12\x1e\n" +
+	"\n" +
+	"isFavorite\x18\v \x01(\bR\n" +
+	"isFavoriteB\b\n" +
 	"\x06_notes\"\xc6\x01\n" +
 	"\x1bSaveArticleToLibraryRequest\x12\x1d\n" +
 	"\n" +
@@ -498,9 +554,10 @@ const file_library_v1_library_proto_rawDesc = "" +
 	"\x1cSaveArticleToLibraryResponse\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\x03R\x02id\"0\n" +
 	"\x15GetUserLibraryRequest\x12\x17\n" +
-	"\auser_id\x18\x01 \x01(\x03R\x06userId\"O\n" +
-	"\x16GetUserLibraryResponse\x125\n" +
-	"\tlibraries\x18\x01 \x03(\v2\x17.api.library.v1.LibraryR\tlibraries*\x9e\x01\n" +
+	"\auser_id\x18\x01 \x01(\x03R\x06userId\"\x9e\x01\n" +
+	"\x16GetUserLibraryResponse\x12?\n" +
+	"\x0edefaultLibrary\x18\x01 \x01(\v2\x17.api.library.v1.LibraryR\x0edefaultLibrary\x12C\n" +
+	"\x10privateLibraries\x18\x02 \x03(\v2\x17.api.library.v1.LibraryR\x10privateLibraries*\x9e\x01\n" +
 	"\rReadingStatus\x12\x1e\n" +
 	"\x1aREADING_STATUS_UNSPECIFIED\x10\x00\x12\x1a\n" +
 	"\x16READING_STATUS_TO_READ\x10\x01\x12\x1a\n" +
@@ -536,22 +593,24 @@ var file_library_v1_library_proto_goTypes = []any{
 	(*timestamppb.Timestamp)(nil),        // 7: google.protobuf.Timestamp
 }
 var file_library_v1_library_proto_depIdxs = []int32{
-	2, // 0: api.library.v1.Library.articles:type_name -> api.library.v1.LibraryArticle
-	7, // 1: api.library.v1.Library.created_at:type_name -> google.protobuf.Timestamp
-	7, // 2: api.library.v1.Library.updated_at:type_name -> google.protobuf.Timestamp
-	0, // 3: api.library.v1.LibraryArticle.reading_status:type_name -> api.library.v1.ReadingStatus
-	7, // 4: api.library.v1.LibraryArticle.added_at:type_name -> google.protobuf.Timestamp
-	0, // 5: api.library.v1.SaveArticleToLibraryRequest.reading_status:type_name -> api.library.v1.ReadingStatus
-	1, // 6: api.library.v1.GetUserLibraryResponse.libraries:type_name -> api.library.v1.Library
-	3, // 7: api.library.v1.LibraryService.SaveArticleToLibrary:input_type -> api.library.v1.SaveArticleToLibraryRequest
-	5, // 8: api.library.v1.LibraryService.GetUserLibrary:input_type -> api.library.v1.GetUserLibraryRequest
-	4, // 9: api.library.v1.LibraryService.SaveArticleToLibrary:output_type -> api.library.v1.SaveArticleToLibraryResponse
-	6, // 10: api.library.v1.LibraryService.GetUserLibrary:output_type -> api.library.v1.GetUserLibraryResponse
-	9, // [9:11] is the sub-list for method output_type
-	7, // [7:9] is the sub-list for method input_type
-	7, // [7:7] is the sub-list for extension type_name
-	7, // [7:7] is the sub-list for extension extendee
-	0, // [0:7] is the sub-list for field type_name
+	2,  // 0: api.library.v1.Library.articles:type_name -> api.library.v1.LibraryArticle
+	7,  // 1: api.library.v1.Library.created_at:type_name -> google.protobuf.Timestamp
+	7,  // 2: api.library.v1.Library.updated_at:type_name -> google.protobuf.Timestamp
+	0,  // 3: api.library.v1.LibraryArticle.reading_status:type_name -> api.library.v1.ReadingStatus
+	7,  // 4: api.library.v1.LibraryArticle.dateAdded:type_name -> google.protobuf.Timestamp
+	7,  // 5: api.library.v1.LibraryArticle.dateCompleted:type_name -> google.protobuf.Timestamp
+	0,  // 6: api.library.v1.SaveArticleToLibraryRequest.reading_status:type_name -> api.library.v1.ReadingStatus
+	1,  // 7: api.library.v1.GetUserLibraryResponse.defaultLibrary:type_name -> api.library.v1.Library
+	1,  // 8: api.library.v1.GetUserLibraryResponse.privateLibraries:type_name -> api.library.v1.Library
+	3,  // 9: api.library.v1.LibraryService.SaveArticleToLibrary:input_type -> api.library.v1.SaveArticleToLibraryRequest
+	5,  // 10: api.library.v1.LibraryService.GetUserLibrary:input_type -> api.library.v1.GetUserLibraryRequest
+	4,  // 11: api.library.v1.LibraryService.SaveArticleToLibrary:output_type -> api.library.v1.SaveArticleToLibraryResponse
+	6,  // 12: api.library.v1.LibraryService.GetUserLibrary:output_type -> api.library.v1.GetUserLibraryResponse
+	11, // [11:13] is the sub-list for method output_type
+	9,  // [9:11] is the sub-list for method input_type
+	9,  // [9:9] is the sub-list for extension type_name
+	9,  // [9:9] is the sub-list for extension extendee
+	0,  // [0:9] is the sub-list for field type_name
 }
 
 func init() { file_library_v1_library_proto_init() }

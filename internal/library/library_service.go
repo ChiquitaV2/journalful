@@ -46,6 +46,7 @@ func (l *LibraryService) GetUserLibrary(ctx context.Context, request *library.Ge
 	if err != nil {
 		return nil, err
 	}
+	var defaultLibrary *library.Library
 
 	var response []*library.Library
 	for _, lib := range libraries {
@@ -61,7 +62,7 @@ func (l *LibraryService) GetUserLibrary(ctx context.Context, request *library.Ge
 				Id:              article.ID,
 				ArticleId:       article.ArticleID,
 				ReadingStatus:   library.ReadingStatus(article.ReadingStatus.Int16),
-				AddedAt:         timestamppb.New(article.AddedAt.Time),
+				DateAdded:       timestamppb.New(article.Dateadded.Time),
 				Notes:           &notes,
 				ArticleTitle:    article.ArticleTitle,
 				Doi:             article.Doi,
@@ -71,13 +72,26 @@ func (l *LibraryService) GetUserLibrary(ctx context.Context, request *library.Ge
 		name := lib.Name.String
 		response = append(response, &library.Library{
 			Id:        lib.ID,
-			UserId:    lib.UserID,
-			Name:      &name,
+			OwnerId:   lib.OwnerID,
+			Name:      name,
 			CreatedAt: timestamppb.New(lib.CreatedAt.Time),
 			UpdatedAt: timestamppb.New(lib.UpdatedAt.Time),
 			Articles:  libraryArticles,
 		})
+		if lib.Isdefault.Bool {
+			defaultLibrary = &library.Library{
+				Id:        lib.ID,
+				OwnerId:   lib.OwnerID,
+				Name:      name,
+				CreatedAt: timestamppb.New(lib.CreatedAt.Time),
+				UpdatedAt: timestamppb.New(lib.UpdatedAt.Time),
+				Articles:  libraryArticles,
+			}
+		}
 	}
 
-	return &library.GetUserLibraryResponse{Libraries: response}, nil
+	return &library.GetUserLibraryResponse{
+		DefaultLibrary:   defaultLibrary,
+		PrivateLibraries: response,
+	}, nil
 }

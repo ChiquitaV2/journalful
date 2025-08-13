@@ -222,10 +222,7 @@
 </template>
 
 <script setup>
-// Set layout
-definePageMeta({
-  layout: 'default'
-})
+
 
 // Configure layout
 const { setLayoutConfig } = useLayout()
@@ -234,7 +231,8 @@ onMounted(() => {
   setLayoutConfig({
     pageTitle: 'Profile',
     showActionButton: true,
-    actionIcon: 'heroicons:pencil'
+    actionIcon: 'heroicons:pencil',
+    actionCallback: toggleEditMode
   })
 })
 const { showSuccess, showError } = useNotifications()
@@ -242,6 +240,7 @@ const { showSuccess, showError } = useNotifications()
 // State
 const isEditing = ref(false)
 const isSaving = ref(false)
+
 
 // Mock profile data
 const profile = ref({

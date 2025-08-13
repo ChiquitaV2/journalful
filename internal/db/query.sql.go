@@ -27,14 +27,18 @@ func (q *Queries) AddArticleAuthor(ctx context.Context, arg AddArticleAuthorPara
 }
 
 const addLibraryArticle = `-- name: AddLibraryArticle :execresult
-INSERT INTO library_articles (library_id, article_id, reading_status, notes) VALUES (?, ?, ?, ?)
+INSERT INTO library_articles (library_id, article_id, reading_status, reading_progress, dateAdded, dateCompleted, notes, isFavorite) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
 `
 
 type AddLibraryArticleParams struct {
-	LibraryID     int64
-	ArticleID     int64
-	ReadingStatus sql.NullInt16
-	Notes         sql.NullString
+	LibraryID       int64
+	ArticleID       int64
+	ReadingStatus   sql.NullInt16
+	ReadingProgress sql.NullInt32
+	Dateadded       sql.NullTime
+	Datecompleted   sql.NullTime
+	Notes           sql.NullString
+	Isfavorite      sql.NullBool
 }
 
 func (q *Queries) AddLibraryArticle(ctx context.Context, arg AddLibraryArticleParams) (sql.Result, error) {
@@ -42,18 +46,23 @@ func (q *Queries) AddLibraryArticle(ctx context.Context, arg AddLibraryArticlePa
 		arg.LibraryID,
 		arg.ArticleID,
 		arg.ReadingStatus,
+		arg.ReadingProgress,
+		arg.Dateadded,
+		arg.Datecompleted,
 		arg.Notes,
+		arg.Isfavorite,
 	)
 }
 
 const createArticle = `-- name: CreateArticle :execresult
-INSERT INTO articles (doi, title, abstract, publication_year, journal_name) VALUES (?, ?, ?, ?, ?)
+INSERT INTO articles (doi, title, abstract, url, publication_year, journal_name) VALUES (?, ?, ?, ?, ?, ?)
 `
 
 type CreateArticleParams struct {
 	Doi             string
 	Title           string
 	Abstract        sql.NullString
+	Url             sql.NullString
 	PublicationYear sql.NullInt32
 	JournalName     sql.NullString
 }
@@ -63,43 +72,45 @@ func (q *Queries) CreateArticle(ctx context.Context, arg CreateArticleParams) (s
 		arg.Doi,
 		arg.Title,
 		arg.Abstract,
+		arg.Url,
 		arg.PublicationYear,
 		arg.JournalName,
 	)
 }
 
 const createAuthor = `-- name: CreateAuthor :execresult
-INSERT INTO authors (name) VALUES (?)
-`
-
-func (q *Queries) CreateAuthor(ctx context.Context, name string) (sql.Result, error) {
-	return q.db.ExecContext(ctx, createAuthor, name)
-}
-
-const createAuthorWithProfile = `-- name: CreateAuthorWithProfile :execresult
 INSERT INTO authors (name, profile_id) VALUES (?, ?)
 `
 
-type CreateAuthorWithProfileParams struct {
+type CreateAuthorParams struct {
 	Name      string
 	ProfileID sql.NullInt64
 }
 
-func (q *Queries) CreateAuthorWithProfile(ctx context.Context, arg CreateAuthorWithProfileParams) (sql.Result, error) {
-	return q.db.ExecContext(ctx, createAuthorWithProfile, arg.Name, arg.ProfileID)
+func (q *Queries) CreateAuthor(ctx context.Context, arg CreateAuthorParams) (sql.Result, error) {
+	return q.db.ExecContext(ctx, createAuthor, arg.Name, arg.ProfileID)
 }
 
 const createLibrary = `-- name: CreateLibrary :execresult
-INSERT INTO library (user_id, name) VALUES (?, ?)
+INSERT INTO library (owner_id, name, description, isPublic, isDefault) VALUES (?, ?, ?, ?, ?)
 `
 
 type CreateLibraryParams struct {
-	UserID int64
-	Name   sql.NullString
+	OwnerID     int64
+	Name        sql.NullString
+	Description sql.NullString
+	Ispublic    sql.NullBool
+	Isdefault   sql.NullBool
 }
 
 func (q *Queries) CreateLibrary(ctx context.Context, arg CreateLibraryParams) (sql.Result, error) {
-	return q.db.ExecContext(ctx, createLibrary, arg.UserID, arg.Name)
+	return q.db.ExecContext(ctx, createLibrary,
+		arg.OwnerID,
+		arg.Name,
+		arg.Description,
+		arg.Ispublic,
+		arg.Isdefault,
+	)
 }
 
 const createProfile = `-- name: CreateProfile :execresult
@@ -175,9 +186,18 @@ func (q *Queries) DeleteProfile(ctx context.Context, id int64) error {
 	return err
 }
 
+const deleteSavedArticle = `-- name: DeleteSavedArticle :exec
+DELETE FROM library_articles WHERE id = ?
+`
+
+func (q *Queries) DeleteSavedArticle(ctx context.Context, id int64) error {
+	_, err := q.db.ExecContext(ctx, deleteSavedArticle, id)
+	return err
+}
+
 const getArticle = `-- name: GetArticle :one
 
-SELECT id, doi, title, abstract, publication_year, journal_name, created_at, updated_at FROM articles WHERE id = ? LIMIT 1
+SELECT id, doi, title, abstract, url, publication_year, journal_name, created_at, updated_at FROM articles WHERE id = ? LIMIT 1
 `
 
 // Academic articles/papers
@@ -189,6 +209,7 @@ func (q *Queries) GetArticle(ctx context.Context, id int64) (Article, error) {
 		&i.Doi,
 		&i.Title,
 		&i.Abstract,
+		&i.Url,
 		&i.PublicationYear,
 		&i.JournalName,
 		&i.CreatedAt,
@@ -198,7 +219,7 @@ func (q *Queries) GetArticle(ctx context.Context, id int64) (Article, error) {
 }
 
 const getArticleByDOI = `-- name: GetArticleByDOI :one
-SELECT id, doi, title, abstract, publication_year, journal_name, created_at, updated_at FROM articles WHERE doi = ? LIMIT 1
+SELECT id, doi, title, abstract, url, publication_year, journal_name, created_at, updated_at FROM articles WHERE doi = ? LIMIT 1
 `
 
 func (q *Queries) GetArticleByDOI(ctx context.Context, doi string) (Article, error) {
@@ -209,6 +230,7 @@ func (q *Queries) GetArticleByDOI(ctx context.Context, doi string) (Article, err
 		&i.Doi,
 		&i.Title,
 		&i.Abstract,
+		&i.Url,
 		&i.PublicationYear,
 		&i.JournalName,
 		&i.CreatedAt,
@@ -272,7 +294,7 @@ func (q *Queries) GetAuthorByProfileID(ctx context.Context, profileID sql.NullIn
 
 const getLibrary = `-- name: GetLibrary :one
 
-SELECT id, user_id, name, created_at, updated_at FROM library WHERE id = ? LIMIT 1
+SELECT id, owner_id, name, description, ispublic, isdefault, created_at, updated_at FROM library WHERE id = ? LIMIT 1
 `
 
 // User's personal library
@@ -281,8 +303,11 @@ func (q *Queries) GetLibrary(ctx context.Context, id int64) (Library, error) {
 	var i Library
 	err := row.Scan(
 		&i.ID,
-		&i.UserID,
+		&i.OwnerID,
 		&i.Name,
+		&i.Description,
+		&i.Ispublic,
+		&i.Isdefault,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 	)
@@ -291,7 +316,7 @@ func (q *Queries) GetLibrary(ctx context.Context, id int64) (Library, error) {
 
 const getLibraryArticle = `-- name: GetLibraryArticle :one
 
-SELECT id, library_id, article_id, reading_status, added_at, notes, created_at, updated_at FROM library_articles WHERE library_id = ? AND article_id = ? LIMIT 1
+SELECT id, library_id, article_id, reading_status, reading_progress, dateadded, datecompleted, notes, isfavorite, created_at, updated_at FROM library_articles WHERE library_id = ? AND article_id = ? LIMIT 1
 `
 
 type GetLibraryArticleParams struct {
@@ -308,8 +333,11 @@ func (q *Queries) GetLibraryArticle(ctx context.Context, arg GetLibraryArticlePa
 		&i.LibraryID,
 		&i.ArticleID,
 		&i.ReadingStatus,
-		&i.AddedAt,
+		&i.ReadingProgress,
+		&i.Dateadded,
+		&i.Datecompleted,
 		&i.Notes,
+		&i.Isfavorite,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 	)
@@ -431,7 +459,7 @@ func (q *Queries) ListArticleAuthorsByAuthorID(ctx context.Context, authorID int
 }
 
 const listArticles = `-- name: ListArticles :many
-SELECT id, doi, title, abstract, publication_year, journal_name, created_at, updated_at FROM articles ORDER BY title
+SELECT id, doi, title, abstract, url, publication_year, journal_name, created_at, updated_at FROM articles ORDER BY title
 `
 
 func (q *Queries) ListArticles(ctx context.Context) ([]Article, error) {
@@ -448,6 +476,7 @@ func (q *Queries) ListArticles(ctx context.Context) ([]Article, error) {
 			&i.Doi,
 			&i.Title,
 			&i.Abstract,
+			&i.Url,
 			&i.PublicationYear,
 			&i.JournalName,
 			&i.CreatedAt,
@@ -500,11 +529,11 @@ func (q *Queries) ListAuthors(ctx context.Context) ([]Author, error) {
 }
 
 const listLibrariesByUserID = `-- name: ListLibrariesByUserID :many
-SELECT id, user_id, name, created_at, updated_at FROM library WHERE user_id = ? ORDER BY created_at
+SELECT id, owner_id, name, description, ispublic, isdefault, created_at, updated_at FROM library WHERE owner_id = ? ORDER BY created_at
 `
 
-func (q *Queries) ListLibrariesByUserID(ctx context.Context, userID int64) ([]Library, error) {
-	rows, err := q.db.QueryContext(ctx, listLibrariesByUserID, userID)
+func (q *Queries) ListLibrariesByUserID(ctx context.Context, ownerID int64) ([]Library, error) {
+	rows, err := q.db.QueryContext(ctx, listLibrariesByUserID, ownerID)
 	if err != nil {
 		return nil, err
 	}
@@ -514,8 +543,11 @@ func (q *Queries) ListLibrariesByUserID(ctx context.Context, userID int64) ([]Li
 		var i Library
 		if err := rows.Scan(
 			&i.ID,
-			&i.UserID,
+			&i.OwnerID,
 			&i.Name,
+			&i.Description,
+			&i.Ispublic,
+			&i.Isdefault,
 			&i.CreatedAt,
 			&i.UpdatedAt,
 		); err != nil {
@@ -537,7 +569,7 @@ SELECT
     la.id,
     la.article_id,
     la.reading_status,
-    la.added_at,
+    la.dateAdded,
     la.notes,
     a.title AS article_title,
     a.doi,
@@ -545,14 +577,14 @@ SELECT
 FROM library_articles la
          JOIN articles a ON la.article_id = a.id
 WHERE la.library_id = ?
-ORDER BY la.added_at DESC
+ORDER BY la.dateAdded DESC
 `
 
 type ListLibraryArticlesByLibraryIDRow struct {
 	ID              int64
 	ArticleID       int64
 	ReadingStatus   sql.NullInt16
-	AddedAt         sql.NullTime
+	Dateadded       sql.NullTime
 	Notes           sql.NullString
 	ArticleTitle    string
 	Doi             string
@@ -572,7 +604,7 @@ func (q *Queries) ListLibraryArticlesByLibraryID(ctx context.Context, libraryID 
 			&i.ID,
 			&i.ArticleID,
 			&i.ReadingStatus,
-			&i.AddedAt,
+			&i.Dateadded,
 			&i.Notes,
 			&i.ArticleTitle,
 			&i.Doi,
@@ -626,13 +658,14 @@ func (q *Queries) ListProfiles(ctx context.Context) ([]Profile, error) {
 }
 
 const updateArticle = `-- name: UpdateArticle :exec
-UPDATE articles SET doi = ?, title = ?, abstract = ?, publication_year = ?, journal_name = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?
+UPDATE articles SET doi = ?, title = ?, abstract = ?, url = ?, publication_year = ?, journal_name = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?
 `
 
 type UpdateArticleParams struct {
 	Doi             string
 	Title           string
 	Abstract        sql.NullString
+	Url             sql.NullString
 	PublicationYear sql.NullInt32
 	JournalName     sql.NullString
 	ID              int64
@@ -643,6 +676,7 @@ func (q *Queries) UpdateArticle(ctx context.Context, arg UpdateArticleParams) er
 		arg.Doi,
 		arg.Title,
 		arg.Abstract,
+		arg.Url,
 		arg.PublicationYear,
 		arg.JournalName,
 		arg.ID,
@@ -666,16 +700,25 @@ func (q *Queries) UpdateAuthor(ctx context.Context, arg UpdateAuthorParams) erro
 }
 
 const updateLibrary = `-- name: UpdateLibrary :exec
-UPDATE library SET name = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?
+UPDATE library SET name = ?, description = ?, isPublic = ?, isDefault = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?
 `
 
 type UpdateLibraryParams struct {
-	Name sql.NullString
-	ID   int64
+	Name        sql.NullString
+	Description sql.NullString
+	Ispublic    sql.NullBool
+	Isdefault   sql.NullBool
+	ID          int64
 }
 
 func (q *Queries) UpdateLibrary(ctx context.Context, arg UpdateLibraryParams) error {
-	_, err := q.db.ExecContext(ctx, updateLibrary, arg.Name, arg.ID)
+	_, err := q.db.ExecContext(ctx, updateLibrary,
+		arg.Name,
+		arg.Description,
+		arg.Ispublic,
+		arg.Isdefault,
+		arg.ID,
+	)
 	return err
 }
 
@@ -725,5 +768,20 @@ func (q *Queries) UpdateProfile(ctx context.Context, arg UpdateProfileParams) er
 		arg.Institution,
 		arg.ID,
 	)
+	return err
+}
+
+const updateSavedArticle = `-- name: UpdateSavedArticle :exec
+UPDATE library_articles SET reading_status = ?, notes = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?
+`
+
+type UpdateSavedArticleParams struct {
+	ReadingStatus sql.NullInt16
+	Notes         sql.NullString
+	ID            int64
+}
+
+func (q *Queries) UpdateSavedArticle(ctx context.Context, arg UpdateSavedArticleParams) error {
+	_, err := q.db.ExecContext(ctx, updateSavedArticle, arg.ReadingStatus, arg.Notes, arg.ID)
 	return err
 }

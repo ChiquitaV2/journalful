@@ -151,7 +151,7 @@ const errorInfo = computed(() => {
   }
 })
 
-const errorTitle = computed(() => errorInfo.value.title)
+const errorTitle = computed(() => errorpInfo.value.title)
 const errorMessage = computed(() => errorInfo.value.message)
 const errorIcon = computed(() => errorInfo.value.icon)
 

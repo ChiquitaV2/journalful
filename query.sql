@@ -31,10 +31,7 @@ SELECT * FROM authors WHERE profile_id = ? LIMIT 1;
 SELECT * FROM authors ORDER BY name;
 
 -- name: CreateAuthor :execresult
-INSERT INTO authors (name) VALUES (?) ;
-
--- name: CreateAuthorWithProfile :execresult
-INSERT INTO authors (name, profile_id) VALUES (?, ?) ;
+INSERT INTO authors (name, profile_id) VALUES (?, ?);
 
 -- name: UpdateAuthor :exec
 UPDATE authors SET name = ?, profile_id = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?;
@@ -56,10 +53,10 @@ SELECT * FROM articles WHERE doi = ? LIMIT 1;
 SELECT * FROM articles ORDER BY title;
 
 -- name: CreateArticle :execresult
-INSERT INTO articles (doi, title, abstract, publication_year, journal_name) VALUES (?, ?, ?, ?, ?);
+INSERT INTO articles (doi, title, abstract, url, publication_year, journal_name) VALUES (?, ?, ?, ?, ?, ?);
 
 -- name: UpdateArticle :exec
-UPDATE articles SET doi = ?, title = ?, abstract = ?, publication_year = ?, journal_name = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?;
+UPDATE articles SET doi = ?, title = ?, abstract = ?, url = ?, publication_year = ?, journal_name = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?;
 
 -- name: DeleteArticle :exec
 DELETE FROM articles WHERE id = ?;
@@ -102,13 +99,13 @@ DELETE FROM article_authors WHERE article_id = ? AND author_id = ?;
 SELECT * FROM library WHERE id = ? LIMIT 1;
 
 -- name: ListLibrariesByUserID :many
-SELECT * FROM library WHERE user_id = ? ORDER BY created_at;
+SELECT * FROM library WHERE owner_id = ? ORDER BY created_at;
 
 -- name: CreateLibrary :execresult
-INSERT INTO library (user_id, name) VALUES (?, ?);
+INSERT INTO library (owner_id, name, description, isPublic, isDefault) VALUES (?, ?, ?, ?, ?);
 
 -- name: UpdateLibrary :exec
-UPDATE library SET name = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?;
+UPDATE library SET name = ?, description = ?, isPublic = ?, isDefault = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?;
 
 -- name: DeleteLibrary :exec
 DELETE FROM library WHERE id = ?;
@@ -120,14 +117,14 @@ DELETE FROM library WHERE id = ?;
 SELECT * FROM library_articles WHERE library_id = ? AND article_id = ? LIMIT 1;
 
 -- name: AddLibraryArticle :execresult
-INSERT INTO library_articles (library_id, article_id, reading_status, notes) VALUES (?, ?, ?, ?);
+INSERT INTO library_articles (library_id, article_id, reading_status, reading_progress, dateAdded, dateCompleted, notes, isFavorite) VALUES (?, ?, ?, ?, ?, ?, ?, ?);
 
 -- name: ListLibraryArticlesByLibraryID :many
 SELECT
     la.id,
     la.article_id,
     la.reading_status,
-    la.added_at,
+    la.dateAdded,
     la.notes,
     a.title AS article_title,
     a.doi,
@@ -135,7 +132,7 @@ SELECT
 FROM library_articles la
          JOIN articles a ON la.article_id = a.id
 WHERE la.library_id = ?
-ORDER BY la.added_at DESC;
+ORDER BY la.dateAdded DESC;
 
 -- name: UpdateLibraryArticleStatus :exec
 UPDATE library_articles SET reading_status = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?;

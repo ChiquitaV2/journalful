@@ -1,10 +1,11 @@
-interface LayoutConfig {
+export interface LayoutConfig {
   pageTitle: string
   backRoute: string
   showSearchButton: boolean
   showAddButton: boolean
   showActionButton: boolean
   actionIcon: string
+  actionCallback?: () => void
   showProfile: boolean
 }
 
@@ -21,18 +22,31 @@ interface HeaderButtonConfig {
  */
 export const useLayout = () => {
   // Layout configuration state
-  const layoutConfig = ref<LayoutConfig>({
-    pageTitle: 'Academic Reader',
-    backRoute: '/',
-    showSearchButton: true,
-    showAddButton: false,
-    showActionButton: false,
-    actionIcon: 'heroicons:ellipsis-horizontal',
-    showProfile: true
+  const layoutConfig = useState<LayoutConfig>('layout',() => {
+    return {
+      pageTitle: 'Academic Reader',
+      backRoute: '/',
+      showSearchButton: true,
+      showAddButton: false,
+      showActionButton: false,
+      actionIcon: 'heroicons:ellipsis-horizontal',
+      actionCallback: undefined,
+      showProfile: true
+    }
   })
+  // const layoutConfig = ref<LayoutConfig>({
+  //     pageTitle: 'Academic Reader',
+  //     backRoute: '/',
+  //     showSearchButton: true,
+  //     showAddButton: false,
+  //     showActionButton: false,
+  //     actionIcon: 'heroicons:ellipsis-horizontal',
+  //     showProfile: true
+  //   })
 
   // Update layout configuration
   const setLayoutConfig = (config: Partial<LayoutConfig>) => {
+    resetLayoutConfig()
     layoutConfig.value = { ...layoutConfig.value, ...config }
   }
 
@@ -53,6 +67,20 @@ export const useLayout = () => {
     if (config.action !== undefined) layoutConfig.value.showActionButton = config.action
     if (config.actionIcon !== undefined) layoutConfig.value.actionIcon = config.actionIcon
     if (config.profile !== undefined) layoutConfig.value.showProfile = config.profile
+  }
+
+  const resetLayoutConfig = () => {
+
+    layoutConfig.value = {
+      pageTitle: 'Academic Reader',
+      backRoute: '/',
+      showSearchButton: true,
+      showAddButton: false,
+      showActionButton: false,
+      actionIcon: 'heroicons:ellipsis-horizontal',
+      actionCallback: undefined,
+      showProfile: true
+    }
   }
 
   return {

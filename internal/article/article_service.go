@@ -3,16 +3,13 @@ package article
 import (
 	context "context"
 	"database/sql"
-	"encoding/json"
 	"fmt"
 	"github.com/chiquitav2/journalful/internal/db"
-	"github.com/chiquitav2/journalful/internal/profile"
+
 	"github.com/chiquitav2/journalful/pkg/articles/v1"
 	v1 "github.com/chiquitav2/journalful/pkg/profile/v1"
 	"google.golang.org/protobuf/types/known/timestamppb"
-	"io"
 	"log/slog"
-	"net/http"
 )
 
 type ArticleService interface {
@@ -25,20 +22,20 @@ type ArticleService interface {
 }
 
 type ArticleSerivceImp struct {
-	authorRepo  profile.Repository
-	articleRepo *db.Queries
+	queries     *db.Queries
+	metadataSvc *MetadataService
 }
 
 func NewArticleSerivce(conn *sql.DB) ArticleService {
 	return &ArticleSerivceImp{
-		authorRepo:  profile.NewProfileRepository(conn),
-		articleRepo: db.New(conn),
+		queries:     db.New(conn),
+		metadataSvc: NewMetadataService(),
 	}
 }
 
 func (s *ArticleSerivceImp) GetArticle(ctx context.Context, id int64) (*article.GetArticleResponse, error) {
 	// Fetch the article from the database
-	articleData, err := s.articleRepo.GetArticle(ctx, id)
+	articleData, err := s.queries.GetArticle(ctx, id)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			slog.Warn("article not found", "id", id)
@@ -48,7 +45,7 @@ func (s *ArticleSerivceImp) GetArticle(ctx context.Context, id int64) (*article.
 		return nil, fmt.Errorf("failed to get article: %w", err)
 	}
 	// Fetch the authors for the article
-	authors, err := s.articleRepo.ListArticleAuthorsByArticleID(ctx, id)
+	authors, err := s.queries.ListArticleAuthorsByArticleID(ctx, id)
 
 	if err != nil {
 		if err == sql.ErrNoRows {
@@ -65,7 +62,7 @@ func (s *ArticleSerivceImp) GetArticle(ctx context.Context, id int64) (*article.
 
 func (s *ArticleSerivceImp) GetArticleByDOI(ctx context.Context, doi string) (*article.GetArticleByDOIResponse, error) {
 	// Fetch the article from the database
-	articleData, err := s.articleRepo.GetArticleByDOI(ctx, doi)
+	articleData, err := s.queries.GetArticleByDOI(ctx, doi)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			slog.Warn("article not found", "doi", doi)
@@ -75,7 +72,7 @@ func (s *ArticleSerivceImp) GetArticleByDOI(ctx context.Context, doi string) (*a
 		return nil, fmt.Errorf("failed to get article by DOI: %w", err)
 	}
 	// Fetch the authors for the article
-	authors, err := s.articleRepo.ListArticleAuthorsByArticleID(ctx, articleData.ID)
+	authors, err := s.queries.ListArticleAuthorsByArticleID(ctx, articleData.ID)
 
 	if err != nil {
 		if err == sql.ErrNoRows {
@@ -95,7 +92,7 @@ func (s *ArticleSerivceImp) ListArticles(ctx context.Context, request *article.L
 		return nil, fmt.Errorf("invalid request: %v", request)
 	}
 	// Fetch the articles from the database
-	articlesData, err := s.articleRepo.ListArticles(ctx)
+	articlesData, err := s.queries.ListArticles(ctx)
 	if err != nil {
 		slog.Error("failed to list articles", "error", err)
 		return nil, fmt.Errorf("failed to list articles: %w", err)
@@ -104,7 +101,7 @@ func (s *ArticleSerivceImp) ListArticles(ctx context.Context, request *article.L
 	var articles []*article.Article
 	for _, dbArticle := range articlesData {
 		// Fetch the authors for each article
-		authors, err := s.articleRepo.ListArticleAuthorsByArticleID(ctx, dbArticle.ID)
+		authors, err := s.queries.ListArticleAuthorsByArticleID(ctx, dbArticle.ID)
 		if err != nil {
 			slog.Error("failed to get article authors", "error", err)
 			return nil, fmt.Errorf("failed to get article authors: %w", err)
@@ -122,92 +119,31 @@ func (s *ArticleSerivceImp) CreateArticle(ctx context.Context, request *article.
 	if request == nil || request.Doi == "" {
 		return nil, fmt.Errorf("invalid request: DOI is required")
 	}
-
-	var (
-		articleTitle           string
-		articleAbstract        sql.NullString
-		articlePublicationYear sql.NullInt32
-		articleJournalName     sql.NullString
-		normalizedAuthors      []string
-	)
-
-	// Attempt to fetch metadata from DOI if provided
-	if request.Doi != "" {
-		meta, err := s.fetchArticleMetadataFromDOI(request.Doi)
-		slog.Info("metadata", meta)
-		if err != nil {
-			slog.Error("failed to fetch article metadata from DOI", "doi", request.Doi, "error", err)
-			// Continue with provided request data if DOI fetch fails
-		} else if meta != nil {
-			if len(meta.Title) > 0 {
-				articleTitle = meta.Title[0]
-			}
-			articleAbstract = sql.NullString{String: meta.Abstract, Valid: meta.Abstract != ""}
-			if len(meta.PublishedOnline.DateParts) > 0 && len(meta.PublishedOnline.DateParts[0]) > 0 {
-				articlePublicationYear = sql.NullInt32{Int32: int32(meta.PublishedOnline.DateParts[0][0]), Valid: true}
-			}
-			if len(meta.ContainerTitle) > 0 {
-				articleJournalName = sql.NullString{String: meta.ContainerTitle[0], Valid: meta.ContainerTitle[0] != ""}
-			}
-
-			for _, author := range meta.Author {
-				fullName := fmt.Sprintf("%s %s", author.Given, author.Family)
-				normalizedAuthors = append(normalizedAuthors, fullName)
-			}
-		}
+	meta, normalizedAuthors, err := s.metadataSvc.FetchAndPrepareArticle(request.Doi)
+	if err != nil {
+		slog.Error("failed to fetch article metadata from DOI", "doi", request.Doi, "error", err)
+		return nil, fmt.Errorf("failed to fetch article metadata from DOI: %w", err)
+	}
+	if meta == nil {
+		slog.Warn("no metadata found for article", "doi", request.Doi)
+		return nil, fmt.Errorf("no metadata found for article with DOI: %s", request.Doi)
 	}
 
-	// Override with request data if provided
-	if request.Title != "" {
-		articleTitle = request.Title
-	}
-	if request.Abstract != nil && *request.Abstract != "" {
-		articleAbstract = sql.NullString{String: *request.Abstract, Valid: true}
-	}
-	if request.PublicationYear != nil && *request.PublicationYear != 0 {
-		articlePublicationYear = sql.NullInt32{Int32: *request.PublicationYear, Valid: true}
-	}
-	if request.JournalName != nil && *request.JournalName != "" {
-		articleJournalName = sql.NullString{String: *request.JournalName, Valid: true}
-	}
-
-	if len(request.Authors) > 0 {
-		normalizedAuthors = make([]string, 0, len(request.Authors))
-		for _, author := range request.Authors {
-			if author != nil && author.Name != "" {
-				normalizedAuthors = append(normalizedAuthors, author.Name)
-			} else {
-				slog.Warn("invalid author data in request", "author", author)
-			}
-		}
-	}
-
-	slog.Info("Build article data", "doi", request.Doi, "title", articleTitle, "authors", normalizedAuthors, "publicationYear", articlePublicationYear)
-	// Final validation after attempting to fetch/override
-	if articleTitle == "" || len(normalizedAuthors) == 0 || !articlePublicationYear.Valid {
-		return nil, fmt.Errorf("missing required article fields after DOI lookup and request override: title, authors, or publication year")
-	}
-
-	dbArticle, err := s.articleRepo.CreateArticle(
-		ctx, db.CreateArticleParams{
-			Title:           articleTitle,
-			Doi:             request.Doi,
-			Abstract:        articleAbstract,
-			PublicationYear: articlePublicationYear,
-			JournalName:     articleJournalName,
-		})
+	// Create article
+	dbArticle, err := s.queries.CreateArticle(ctx, *meta)
 	if err != nil {
 		slog.Error("failed to create article", "error", err)
 		return nil, fmt.Errorf("failed to create article: %w", err)
 	}
+
 	articleID, err := dbArticle.LastInsertId()
 	if err != nil {
 		slog.Error("failed to get last insert ID", "error", err)
 		return nil, fmt.Errorf("failed to get last insert ID: %w", err)
 	}
-	slog.Info("article created", "id", articleID, "doi", request.Doi, "title", articleTitle)
 
-	authors, err := s.authorRepo.FindOrCreateAuthors(ctx, normalizedAuthors)
+	// Create article authors
+	authors, err := s.FindOrCreateAuthors(ctx, normalizedAuthors)
 	if err != nil {
 		slog.Error("failed to find or create authors", "error", err)
 		return nil, fmt.Errorf("failed to find or create authors: %w", err)
@@ -218,7 +154,7 @@ func (s *ArticleSerivceImp) CreateArticle(ctx context.Context, request *article.
 			continue // Skip nil authors
 		}
 		// Insert each author into the database
-		_, err = s.articleRepo.AddArticleAuthor(ctx, db.AddArticleAuthorParams{
+		_, err = s.queries.AddArticleAuthor(ctx, db.AddArticleAuthorParams{
 			ArticleID: articleID,
 			AuthorID:  author.Id,
 			AuthorOrder: sql.NullInt32{
@@ -232,7 +168,7 @@ func (s *ArticleSerivceImp) CreateArticle(ctx context.Context, request *article.
 		}
 	}
 
-	slog.Info("article created successfully", "id", articleID, "doi", request.Doi, "title", articleTitle)
+	slog.Info("article created successfully", "id", articleID, "doi", request.Doi, "title", meta.Title)
 	return &article.CreateArticleResponse{
 		Id: articleID,
 	}, nil
@@ -243,7 +179,7 @@ func (s *ArticleSerivceImp) UpdateArticle(ctx context.Context, request *article.
 		return nil, fmt.Errorf("invalid request: %v", request)
 	}
 	// Fetch the existing article from the database
-	existingArticle, err := s.articleRepo.GetArticle(ctx, request.Id)
+	existingArticle, err := s.queries.GetArticle(ctx, request.Id)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			slog.Warn("article not found for update", "id", request.Id)
@@ -253,7 +189,7 @@ func (s *ArticleSerivceImp) UpdateArticle(ctx context.Context, request *article.
 		return nil, fmt.Errorf("failed to get article for update: %w", err)
 	}
 
-	err = s.articleRepo.UpdateArticle(
+	err = s.queries.UpdateArticle(
 		ctx,
 		db.UpdateArticleParams{
 			ID:              request.Id,
@@ -276,7 +212,7 @@ func (s *ArticleSerivceImp) DeleteArticle(ctx context.Context, request *article.
 		return nil, fmt.Errorf("invalid request: %v", request)
 	}
 	// Delete the article from the database
-	err := s.articleRepo.DeleteArticle(ctx, request.Id)
+	err := s.queries.DeleteArticle(ctx, request.Id)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			slog.Warn("article not found for deletion", "id", request.Id)
@@ -317,52 +253,50 @@ func dbToGrpcArticle(dbArticle db.Article, dbAuthors []db.ListArticleAuthorsByAr
 	}
 }
 
-// CrossRef API response structs
-type CrossRefResponse struct {
-	Message CrossRefMessage `json:"message"`
-}
-
-type CrossRefMessage struct {
-	DOI             string           `json:"DOI"`
-	Title           []string         `json:"title"`
-	Author          []CrossRefAuthor `json:"author"`
-	PublishedOnline CrossRefDate     `json:"published"`
-	Abstract        string           `json:"abstract"`
-	ContainerTitle  []string         `json:"container-title"`
-}
-
-type CrossRefAuthor struct {
-	Given  string `json:"given"`
-	Family string `json:"family"`
-}
-
-type CrossRefDate struct {
-	DateParts [][]int `json:"date-parts"`
-}
-
-func (s *ArticleSerivceImp) fetchArticleMetadataFromDOI(doi string) (*CrossRefMessage, error) {
-	url := fmt.Sprintf("https://api.crossref.org/v1/works/%s", doi)
-
-	resp, err := http.Get(url)
-	if err != nil {
-		return nil, fmt.Errorf("failed to make HTTP request to CrossRef API: %w", err)
+func (s *ArticleSerivceImp) FindOrCreateAuthors(ctx context.Context, names []string) ([]*v1.Author, error) {
+	if len(names) == 0 {
+		return nil, fmt.Errorf("no author names provided")
 	}
-	defer resp.Body.Close()
+	var grpcAuthors []*v1.Author
+	// Insert or update authors in the database
+	for _, name := range names {
+		author, err := s.queries.GetAuthorByName(ctx, name)
+		if err != nil && err != sql.ErrNoRows {
+			return nil, fmt.Errorf("failed to get author by name %s: %w", name, err)
+		}
 
-	if resp.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("CrossRef API returned non-OK status: %s", resp.Status)
-	}
+		if err == sql.ErrNoRows {
+			// If the author does not exist, create a new one
+			authorRow, err := s.queries.CreateAuthor(ctx,
+				db.CreateAuthorParams{
+					Name: name,
+				},
+			)
+			if err != nil {
+				return nil, fmt.Errorf("failed to create author with name %s: %w", name, err)
+			}
 
-	body, err := io.ReadAll(resp.Body)
-	if err != nil {
-		return nil, fmt.Errorf("failed to read CrossRef API response body: %w", err)
-	}
-
-	var crossRefResponse CrossRefResponse
-	err = json.Unmarshal(body, &crossRefResponse)
-	if err != nil {
-		return nil, fmt.Errorf("failed to unmarshal CrossRef API response: %w", err)
+			id, err := authorRow.LastInsertId()
+			if err != nil {
+				return nil, fmt.Errorf("failed to get last insert ID for author %s: %w", name, err)
+			}
+			// Convert the db.Author to profile.Author
+			grpcAuthors = append(grpcAuthors, &v1.Author{
+				Id:   id,
+				Name: name,
+			})
+			continue
+		} else if err != nil {
+			return nil, fmt.Errorf("failed to get author by name %s: %w", name, err)
+		}
+		grpcAuthors = append(grpcAuthors, &v1.Author{
+			Id:        author.ID,
+			Name:      author.Name,
+			ProfileId: author.ProfileID.Int64,
+			CreatedAt: timestamppb.New(author.CreatedAt.Time),
+			UpdatedAt: timestamppb.New(author.UpdatedAt.Time),
+		})
 	}
 
-	return &crossRefResponse.Message, nil
+	return grpcAuthors, nil
 }

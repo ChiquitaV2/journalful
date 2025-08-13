@@ -104,7 +104,7 @@ import { useFormatters } from '~/composables/useFormatters'
 definePageMeta({
   layout: 'default'
 })
-
+useLayout().setLayoutConfig()
 // Composables
 const { formatCount } = useFormatters()
 

@@ -4,8 +4,10 @@ import (
 	"context"
 	"database/sql"
 	"errors"
+	"fmt"
 	"github.com/chiquitav2/journalful/internal/db"
 	"github.com/chiquitav2/journalful/pkg/profile/v1"
+	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
 var (
@@ -13,34 +15,36 @@ var (
 	ErrInvalidRequest = errors.New("invalid request")
 	// ErrProfileNotFound is returned when the profile is not found
 	ErrProfileNotFound = errors.New("profile not found")
+	// ErrAuthorNotFound is returned when the author is not found
+	ErrAuthorNotFound = fmt.Errorf("author not found")
 )
 
 type ProfileService struct {
-	repo Repository
+	queries *db.Queries
 }
 
 func NewProfileService(conn *sql.DB) *ProfileService {
 	return &ProfileService{
-		repo: NewProfileRepository(conn),
+		queries: db.New(conn),
 	}
 }
 
 func (p *ProfileService) GetProfile(ctx context.Context, id int64) (*profile.GetProfileResponse, error) {
 
 	// Fetch the profile from the database
-	profileData, err := p.repo.GetProfile(ctx, id)
+	profileData, err := p.queries.GetProfile(ctx, id)
 	if err != nil {
 		return nil, ErrProfileNotFound
 	}
 
 	return &profile.GetProfileResponse{
-		Profile: profileData,
+		Profile: profileToGrpcProfile(&profileData),
 	}, nil
 }
 
 func (p *ProfileService) CreateProfile(ctx context.Context, request *profile.CreateProfileRequest) (*profile.CreateProfileResponse, error) {
 
-	result, err := p.repo.CreateProfile(ctx, db.CreateProfileParams{
+	result, err := p.queries.CreateProfile(ctx, db.CreateProfileParams{
 		Name:        request.Name,
 		Bio:         sql.NullString{String: *request.Bio, Valid: request.Bio != nil},
 		Institution: sql.NullString{String: *request.Institution, Valid: request.Institution != nil},
@@ -62,7 +66,7 @@ func (p *ProfileService) UpdateProfile(ctx context.Context, request *profile.Upd
 		return nil, ErrInvalidRequest
 	}
 
-	err := p.repo.UpdateProfile(ctx, db.UpdateProfileParams{
+	err := p.queries.UpdateProfile(ctx, db.UpdateProfileParams{
 		ID:          request.Id,
 		Name:        request.Name,
 		Bio:         sql.NullString{String: *request.Bio, Valid: request.Bio != nil},
@@ -76,7 +80,7 @@ func (p *ProfileService) UpdateProfile(ctx context.Context, request *profile.Upd
 }
 
 func (p *ProfileService) DeleteProfile(ctx context.Context, id int64) (*profile.DeleteProfileResponse, error) {
-	err := p.repo.DeleteProfile(ctx, id)
+	err := p.queries.DeleteProfile(ctx, id)
 	if err != nil {
 		return nil, err
 	}
@@ -85,15 +89,32 @@ func (p *ProfileService) DeleteProfile(ctx context.Context, id int64) (*profile.
 }
 
 func (p *ProfileService) ListProfiles(ctx context.Context) (*profile.ListProfilesResponse, error) {
-	profiles, err := p.repo.ListProfiles(ctx)
+	profiles, err := p.queries.ListProfiles(ctx)
 	if err != nil {
 		return nil, err
 	}
-
-	return &profile.ListProfilesResponse{Profiles: profiles}, nil
+	grpcProfiles := make([]*profile.Profile, len(profiles))
+	for i, profile := range profiles {
+		grpcProfiles[i] = profileToGrpcProfile(&profile)
+	}
+	return &profile.ListProfilesResponse{Profiles: grpcProfiles}, nil
 }
 
 func (p *ProfileService) mustEmbedUnimplementedProfileServiceServer() {
 	//TODO implement me
 	panic("implement me")
+}
+
+func profileToGrpcProfile(p *db.Profile) *profile.Profile {
+	if p == nil {
+		return nil
+	}
+	return &profile.Profile{
+		Id:          p.ID,
+		Name:        p.Name,
+		Bio:         p.Bio.String,
+		Institution: p.Institution.String,
+		CreatedAt:   timestamppb.New(p.CreatedAt.Time),
+		UpdatedAt:   timestamppb.New(p.UpdatedAt.Time),
+	}
 }

@@ -50,7 +50,7 @@
             @click="handleAction"
             class="glass-button !p-2"
           >
-            <Icon :name="actionIcon" class="h-5 w-5" />
+            <Icon :name="layoutConfig.actionIcon" class="h-5 w-5" />
           </button>
           
           <!-- Profile Avatar -->
@@ -147,39 +147,46 @@
 <script setup>
 const route = useRoute()
 const router = useRouter()
+const { layoutConfig } = useLayout()
 
+const pageTitle = computed(() => layoutConfig.value.pageTitle)
+const backRoute = computed(() => layoutConfig.value.backRoute)
+const showSearchButton = computed(() => layoutConfig.value.showSearchButton)
+const showAddButton = computed(() => layoutConfig.value.showAddButton)
+const showActionButton = computed(() => layoutConfig.value.showActionButton)
+const actionIcon = computed(() => layoutConfig.value.actionIcon)
+const showProfile = computed(() => layoutConfig.value.showProfile)
 // Layout configuration props (provided by pages)
-const props = defineProps({
-  pageTitle: {
-    type: String,
-    default: 'Academic Reader'
-  },
-  backRoute: {
-    type: String,
-    default: '/'
-  },
-  showSearchButton: {
-    type: Boolean,
-    default: true
-  },
-  showAddButton: {
-    type: Boolean,
-    default: false
-  },
-  showActionButton: {
-    type: Boolean,
-    default: false
-  },
-  actionIcon: {
-    type: String,
-    default: 'heroicons:ellipsis-horizontal'
-  },
-  showProfile: {
-    type: Boolean,
-    default: true
-  }
-})
-
+// const props = defineProps({
+//   pageTitle: {
+//     type: String,
+//     default: 'Academic Reader'
+//   },
+//   backRoute: {
+//     type: String,
+//     default: '/'
+//   },
+//   showSearchButton: {
+//     type: Boolean,
+//     default: true
+//   },
+//   showAddButton: {x
+//     type: Boolean,
+//     default: false
+//   },
+//   showActionButton: {
+//     type: Boolean,
+//     default: false
+//   },
+//   actionIcon: {
+//     type: String,
+//     default: 'heroicons:ellipsis-horizontal'
+//   },
+//   showProfile: {
+//     type: Boolean,
+//     default: true
+//   }
+// })
 // Mobile menu state
 const showMobileMenu = ref(false)
 
@@ -222,7 +229,9 @@ const handleAddAction = () => {
 
 const handleAction = () => {
   // Try to emit to parent page first, fallback to default behavior
-  emit('action')
+  // emit('action')
+  // useNuxtApp().$emit('action')
+  layoutConfig.value.actionCallback()
 }
 
 // Close mobile menu on route change
@@ -242,6 +251,9 @@ onMounted(() => {
   onUnmounted(() => {
     document.removeEventListener('keydown', handleEscape)
   })
+
+
+
 })
 </script>
 

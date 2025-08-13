@@ -9,7 +9,7 @@
           </NuxtLink>
           <h1 class="text-lg font-bold text-white">Settings</h1>
         </div>
-        
+
         <div class="flex items-center space-x-2">
           <button @click="saveSettings" class="glass-button !p-2">
             <Icon name="heroicons:check" class="h-5 w-5" />

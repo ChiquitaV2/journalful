@@ -13,6 +13,7 @@ type Article struct {
 	Doi             string
 	Title           string
 	Abstract        sql.NullString
+	Url             sql.NullString
 	PublicationYear sql.NullInt32
 	JournalName     sql.NullString
 	CreatedAt       sql.NullTime
@@ -26,6 +27,12 @@ type ArticleAuthor struct {
 	CreatedAt   sql.NullTime
 }
 
+type ArticleTag struct {
+	ArticleID int64
+	TagID     int64
+	CreatedAt sql.NullTime
+}
+
 type Author struct {
 	ID        int64
 	Name      string
@@ -35,11 +42,14 @@ type Author struct {
 }
 
 type Library struct {
-	ID        int64
-	UserID    int64
-	Name      sql.NullString
-	CreatedAt sql.NullTime
-	UpdatedAt sql.NullTime
+	ID          int64
+	OwnerID     int64
+	Name        sql.NullString
+	Description sql.NullString
+	Ispublic    sql.NullBool
+	Isdefault   sql.NullBool
+	CreatedAt   sql.NullTime
+	UpdatedAt   sql.NullTime
 }
 
 type LibraryArticle struct {
@@ -47,11 +57,14 @@ type LibraryArticle struct {
 	LibraryID int64
 	ArticleID int64
 	// 0:Unspecified, 1:ToRead, 2:Reading, 3:Read, 4:Abandoned
-	ReadingStatus sql.NullInt16
-	AddedAt       sql.NullTime
-	Notes         sql.NullString
-	CreatedAt     sql.NullTime
-	UpdatedAt     sql.NullTime
+	ReadingStatus   sql.NullInt16
+	ReadingProgress sql.NullInt32
+	Dateadded       sql.NullTime
+	Datecompleted   sql.NullTime
+	Notes           sql.NullString
+	Isfavorite      sql.NullBool
+	CreatedAt       sql.NullTime
+	UpdatedAt       sql.NullTime
 }
 
 type Profile struct {
@@ -61,4 +74,11 @@ type Profile struct {
 	Institution sql.NullString
 	CreatedAt   sql.NullTime
 	UpdatedAt   sql.NullTime
+}
+
+type Tag struct {
+	ID        int64
+	Name      string
+	CreatedAt sql.NullTime
+	UpdatedAt sql.NullTime
 }

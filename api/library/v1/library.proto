@@ -21,22 +21,27 @@ enum ReadingStatus {
 
 message Library {
   int64 id = 1;
-  int64 user_id = 2;
-  optional string name = 3;
-  repeated LibraryArticle articles = 4;
-  google.protobuf.Timestamp created_at = 5;
-  google.protobuf.Timestamp updated_at = 6;
+  int64 owner_id = 2;
+  string name = 3;
+  optional string description = 5;
+  bool isPublic = 6;
+  repeated LibraryArticle articles = 7;
+  google.protobuf.Timestamp created_at = 8;
+  google.protobuf.Timestamp updated_at = 9;
 }
 
 message LibraryArticle {
   int64 id = 1;
   int64 article_id = 2;
   ReadingStatus reading_status = 3;
-  google.protobuf.Timestamp added_at = 4;
-  optional string notes = 5;
-  string article_title = 6;
-  string doi = 7;
-  int32 publication_year = 8;
+  int32 reading_progress = 4;
+  google.protobuf.Timestamp dateAdded = 5;
+  google.protobuf.Timestamp dateCompleted = 6;
+  optional string notes = 7;
+  string article_title = 8;
+  string doi = 9;
+  int32 publication_year = 10;
+  bool isFavorite = 11;
 }
 
 message SaveArticleToLibraryRequest {
@@ -54,5 +59,6 @@ message GetUserLibraryRequest {
   int64 user_id = 1;
 }
 message GetUserLibraryResponse {
-  repeated Library libraries = 1;
+  Library defaultLibrary = 1;
+  repeated Library privateLibraries = 2;
 }

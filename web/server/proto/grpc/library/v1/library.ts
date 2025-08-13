@@ -63,8 +63,10 @@ export function readingStatusToJSON(object: ReadingStatus): string {
 
 export interface Library {
   id: number;
-  userId: number;
-  name?: string | undefined;
+  ownerId: number;
+  name: string;
+  description?: string | undefined;
+  isPublic: boolean;
   articles: LibraryArticle[];
   createdAt: Date | undefined;
   updatedAt: Date | undefined;
@@ -74,11 +76,14 @@ export interface LibraryArticle {
   id: number;
   articleId: number;
   readingStatus: ReadingStatus;
-  addedAt: Date | undefined;
+  readingProgress: number;
+  dateAdded: Date | undefined;
+  dateCompleted: Date | undefined;
   notes?: string | undefined;
   articleTitle: string;
   doi: string;
   publicationYear: number;
+  isFavorite: boolean;
 }
 
 export interface SaveArticleToLibraryRequest {
@@ -97,11 +102,21 @@ export interface GetUserLibraryRequest {
 }
 
 export interface GetUserLibraryResponse {
-  libraries: Library[];
+  defaultLibrary: Library | undefined;
+  privateLibraries: Library[];
 }
 
 function createBaseLibrary(): Library {
-  return { id: 0, userId: 0, name: undefined, articles: [], createdAt: undefined, updatedAt: undefined };
+  return {
+    id: 0,
+    ownerId: 0,
+    name: "",
+    description: undefined,
+    isPublic: false,
+    articles: [],
+    createdAt: undefined,
+    updatedAt: undefined,
+  };
 }
 
 export const Library: MessageFns<Library> = {
@@ -109,20 +124,26 @@ export const Library: MessageFns<Library> = {
     if (message.id !== 0) {
       writer.uint32(8).int64(message.id);
     }
-    if (message.userId !== 0) {
-      writer.uint32(16).int64(message.userId);
+    if (message.ownerId !== 0) {
+      writer.uint32(16).int64(message.ownerId);
     }
-    if (message.name !== undefined) {
+    if (message.name !== "") {
       writer.uint32(26).string(message.name);
     }
+    if (message.description !== undefined) {
+      writer.uint32(42).string(message.description);
+    }
+    if (message.isPublic !== false) {
+      writer.uint32(48).bool(message.isPublic);
+    }
     for (const v of message.articles) {
-      LibraryArticle.encode(v!, writer.uint32(34).fork()).join();
+      LibraryArticle.encode(v!, writer.uint32(58).fork()).join();
     }
     if (message.createdAt !== undefined) {
-      Timestamp.encode(toTimestamp(message.createdAt), writer.uint32(42).fork()).join();
+      Timestamp.encode(toTimestamp(message.createdAt), writer.uint32(66).fork()).join();
     }
     if (message.updatedAt !== undefined) {
-      Timestamp.encode(toTimestamp(message.updatedAt), writer.uint32(50).fork()).join();
+      Timestamp.encode(toTimestamp(message.updatedAt), writer.uint32(74).fork()).join();
     }
     return writer;
   },
@@ -147,7 +168,7 @@ export const Library: MessageFns<Library> = {
             break;
           }
 
-          message.userId = longToNumber(reader.int64());
+          message.ownerId = longToNumber(reader.int64());
           continue;
         }
         case 3: {
@@ -158,24 +179,40 @@ export const Library: MessageFns<Library> = {
           message.name = reader.string();
           continue;
         }
-        case 4: {
-          if (tag !== 34) {
+        case 5: {
+          if (tag !== 42) {
+            break;
+          }
+
+          message.description = reader.string();
+          continue;
+        }
+        case 6: {
+          if (tag !== 48) {
+            break;
+          }
+
+          message.isPublic = reader.bool();
+          continue;
+        }
+        case 7: {
+          if (tag !== 58) {
             break;
           }
 
           message.articles.push(LibraryArticle.decode(reader, reader.uint32()));
           continue;
         }
-        case 5: {
-          if (tag !== 42) {
+        case 8: {
+          if (tag !== 66) {
             break;
           }
 
           message.createdAt = fromTimestamp(Timestamp.decode(reader, reader.uint32()));
           continue;
         }
-        case 6: {
-          if (tag !== 50) {
+        case 9: {
+          if (tag !== 74) {
             break;
           }
 
@@ -194,8 +231,10 @@ export const Library: MessageFns<Library> = {
   fromJSON(object: any): Library {
     return {
       id: isSet(object.id) ? globalThis.Number(object.id) : 0,
-      userId: isSet(object.userId) ? globalThis.Number(object.userId) : 0,
-      name: isSet(object.name) ? globalThis.String(object.name) : undefined,
+      ownerId: isSet(object.ownerId) ? globalThis.Number(object.ownerId) : 0,
+      name: isSet(object.name) ? globalThis.String(object.name) : "",
+      description: isSet(object.description) ? globalThis.String(object.description) : undefined,
+      isPublic: isSet(object.isPublic) ? globalThis.Boolean(object.isPublic) : false,
       articles: globalThis.Array.isArray(object?.articles)
         ? object.articles.map((e: any) => LibraryArticle.fromJSON(e))
         : [],
@@ -209,11 +248,17 @@ export const Library: MessageFns<Library> = {
     if (message.id !== 0) {
       obj.id = Math.round(message.id);
     }
-    if (message.userId !== 0) {
-      obj.userId = Math.round(message.userId);
+    if (message.ownerId !== 0) {
+      obj.ownerId = Math.round(message.ownerId);
     }
-    if (message.name !== undefined) {
+    if (message.name !== "") {
       obj.name = message.name;
+    }
+    if (message.description !== undefined) {
+      obj.description = message.description;
+    }
+    if (message.isPublic !== false) {
+      obj.isPublic = message.isPublic;
     }
     if (message.articles?.length) {
       obj.articles = message.articles.map((e) => LibraryArticle.toJSON(e));
@@ -233,8 +278,10 @@ export const Library: MessageFns<Library> = {
   fromPartial<I extends Exact<DeepPartial<Library>, I>>(object: I): Library {
     const message = createBaseLibrary();
     message.id = object.id ?? 0;
-    message.userId = object.userId ?? 0;
-    message.name = object.name ?? undefined;
+    message.ownerId = object.ownerId ?? 0;
+    message.name = object.name ?? "";
+    message.description = object.description ?? undefined;
+    message.isPublic = object.isPublic ?? false;
     message.articles = object.articles?.map((e) => LibraryArticle.fromPartial(e)) || [];
     message.createdAt = object.createdAt ?? undefined;
     message.updatedAt = object.updatedAt ?? undefined;
@@ -247,11 +294,14 @@ function createBaseLibraryArticle(): LibraryArticle {
     id: 0,
     articleId: 0,
     readingStatus: 0,
-    addedAt: undefined,
+    readingProgress: 0,
+    dateAdded: undefined,
+    dateCompleted: undefined,
     notes: undefined,
     articleTitle: "",
     doi: "",
     publicationYear: 0,
+    isFavorite: false,
   };
 }
 
@@ -266,20 +316,29 @@ export const LibraryArticle: MessageFns<LibraryArticle> = {
     if (message.readingStatus !== 0) {
       writer.uint32(24).int32(message.readingStatus);
     }
-    if (message.addedAt !== undefined) {
-      Timestamp.encode(toTimestamp(message.addedAt), writer.uint32(34).fork()).join();
+    if (message.readingProgress !== 0) {
+      writer.uint32(32).int32(message.readingProgress);
+    }
+    if (message.dateAdded !== undefined) {
+      Timestamp.encode(toTimestamp(message.dateAdded), writer.uint32(42).fork()).join();
+    }
+    if (message.dateCompleted !== undefined) {
+      Timestamp.encode(toTimestamp(message.dateCompleted), writer.uint32(50).fork()).join();
     }
     if (message.notes !== undefined) {
-      writer.uint32(42).string(message.notes);
+      writer.uint32(58).string(message.notes);
     }
     if (message.articleTitle !== "") {
-      writer.uint32(50).string(message.articleTitle);
+      writer.uint32(66).string(message.articleTitle);
     }
     if (message.doi !== "") {
-      writer.uint32(58).string(message.doi);
+      writer.uint32(74).string(message.doi);
     }
     if (message.publicationYear !== 0) {
-      writer.uint32(64).int32(message.publicationYear);
+      writer.uint32(80).int32(message.publicationYear);
+    }
+    if (message.isFavorite !== false) {
+      writer.uint32(88).bool(message.isFavorite);
     }
     return writer;
   },
@@ -316,11 +375,11 @@ export const LibraryArticle: MessageFns<LibraryArticle> = {
           continue;
         }
         case 4: {
-          if (tag !== 34) {
+          if (tag !== 32) {
             break;
           }
 
-          message.addedAt = fromTimestamp(Timestamp.decode(reader, reader.uint32()));
+          message.readingProgress = reader.int32();
           continue;
         }
         case 5: {
@@ -328,7 +387,7 @@ export const LibraryArticle: MessageFns<LibraryArticle> = {
             break;
           }
 
-          message.notes = reader.string();
+          message.dateAdded = fromTimestamp(Timestamp.decode(reader, reader.uint32()));
           continue;
         }
         case 6: {
@@ -336,7 +395,7 @@ export const LibraryArticle: MessageFns<LibraryArticle> = {
             break;
           }
 
-          message.articleTitle = reader.string();
+          message.dateCompleted = fromTimestamp(Timestamp.decode(reader, reader.uint32()));
           continue;
         }
         case 7: {
@@ -344,15 +403,39 @@ export const LibraryArticle: MessageFns<LibraryArticle> = {
             break;
           }
 
-          message.doi = reader.string();
+          message.notes = reader.string();
           continue;
         }
         case 8: {
-          if (tag !== 64) {
+          if (tag !== 66) {
+            break;
+          }
+
+          message.articleTitle = reader.string();
+          continue;
+        }
+        case 9: {
+          if (tag !== 74) {
+            break;
+          }
+
+          message.doi = reader.string();
+          continue;
+        }
+        case 10: {
+          if (tag !== 80) {
             break;
           }
 
           message.publicationYear = reader.int32();
+          continue;
+        }
+        case 11: {
+          if (tag !== 88) {
+            break;
+          }
+
+          message.isFavorite = reader.bool();
           continue;
         }
       }
@@ -369,11 +452,14 @@ export const LibraryArticle: MessageFns<LibraryArticle> = {
       id: isSet(object.id) ? globalThis.Number(object.id) : 0,
       articleId: isSet(object.articleId) ? globalThis.Number(object.articleId) : 0,
       readingStatus: isSet(object.readingStatus) ? readingStatusFromJSON(object.readingStatus) : 0,
-      addedAt: isSet(object.addedAt) ? fromJsonTimestamp(object.addedAt) : undefined,
+      readingProgress: isSet(object.readingProgress) ? globalThis.Number(object.readingProgress) : 0,
+      dateAdded: isSet(object.dateAdded) ? fromJsonTimestamp(object.dateAdded) : undefined,
+      dateCompleted: isSet(object.dateCompleted) ? fromJsonTimestamp(object.dateCompleted) : undefined,
       notes: isSet(object.notes) ? globalThis.String(object.notes) : undefined,
       articleTitle: isSet(object.articleTitle) ? globalThis.String(object.articleTitle) : "",
       doi: isSet(object.doi) ? globalThis.String(object.doi) : "",
       publicationYear: isSet(object.publicationYear) ? globalThis.Number(object.publicationYear) : 0,
+      isFavorite: isSet(object.isFavorite) ? globalThis.Boolean(object.isFavorite) : false,
     };
   },
 
@@ -388,8 +474,14 @@ export const LibraryArticle: MessageFns<LibraryArticle> = {
     if (message.readingStatus !== 0) {
       obj.readingStatus = readingStatusToJSON(message.readingStatus);
     }
-    if (message.addedAt !== undefined) {
-      obj.addedAt = message.addedAt.toISOString();
+    if (message.readingProgress !== 0) {
+      obj.readingProgress = Math.round(message.readingProgress);
+    }
+    if (message.dateAdded !== undefined) {
+      obj.dateAdded = message.dateAdded.toISOString();
+    }
+    if (message.dateCompleted !== undefined) {
+      obj.dateCompleted = message.dateCompleted.toISOString();
     }
     if (message.notes !== undefined) {
       obj.notes = message.notes;
@@ -403,6 +495,9 @@ export const LibraryArticle: MessageFns<LibraryArticle> = {
     if (message.publicationYear !== 0) {
       obj.publicationYear = Math.round(message.publicationYear);
     }
+    if (message.isFavorite !== false) {
+      obj.isFavorite = message.isFavorite;
+    }
     return obj;
   },
 
@@ -414,11 +509,14 @@ export const LibraryArticle: MessageFns<LibraryArticle> = {
     message.id = object.id ?? 0;
     message.articleId = object.articleId ?? 0;
     message.readingStatus = object.readingStatus ?? 0;
-    message.addedAt = object.addedAt ?? undefined;
+    message.readingProgress = object.readingProgress ?? 0;
+    message.dateAdded = object.dateAdded ?? undefined;
+    message.dateCompleted = object.dateCompleted ?? undefined;
     message.notes = object.notes ?? undefined;
     message.articleTitle = object.articleTitle ?? "";
     message.doi = object.doi ?? "";
     message.publicationYear = object.publicationYear ?? 0;
+    message.isFavorite = object.isFavorite ?? false;
     return message;
   },
 };
@@ -648,13 +746,16 @@ export const GetUserLibraryRequest: MessageFns<GetUserLibraryRequest> = {
 };
 
 function createBaseGetUserLibraryResponse(): GetUserLibraryResponse {
-  return { libraries: [] };
+  return { defaultLibrary: undefined, privateLibraries: [] };
 }
 
 export const GetUserLibraryResponse: MessageFns<GetUserLibraryResponse> = {
   encode(message: GetUserLibraryResponse, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
-    for (const v of message.libraries) {
-      Library.encode(v!, writer.uint32(10).fork()).join();
+    if (message.defaultLibrary !== undefined) {
+      Library.encode(message.defaultLibrary, writer.uint32(10).fork()).join();
+    }
+    for (const v of message.privateLibraries) {
+      Library.encode(v!, writer.uint32(18).fork()).join();
     }
     return writer;
   },
@@ -671,7 +772,15 @@ export const GetUserLibraryResponse: MessageFns<GetUserLibraryResponse> = {
             break;
           }
 
-          message.libraries.push(Library.decode(reader, reader.uint32()));
+          message.defaultLibrary = Library.decode(reader, reader.uint32());
+          continue;
+        }
+        case 2: {
+          if (tag !== 18) {
+            break;
+          }
+
+          message.privateLibraries.push(Library.decode(reader, reader.uint32()));
           continue;
         }
       }
@@ -685,16 +794,20 @@ export const GetUserLibraryResponse: MessageFns<GetUserLibraryResponse> = {
 
   fromJSON(object: any): GetUserLibraryResponse {
     return {
-      libraries: globalThis.Array.isArray(object?.libraries)
-        ? object.libraries.map((e: any) => Library.fromJSON(e))
+      defaultLibrary: isSet(object.defaultLibrary) ? Library.fromJSON(object.defaultLibrary) : undefined,
+      privateLibraries: globalThis.Array.isArray(object?.privateLibraries)
+        ? object.privateLibraries.map((e: any) => Library.fromJSON(e))
         : [],
     };
   },
 
   toJSON(message: GetUserLibraryResponse): unknown {
     const obj: any = {};
-    if (message.libraries?.length) {
-      obj.libraries = message.libraries.map((e) => Library.toJSON(e));
+    if (message.defaultLibrary !== undefined) {
+      obj.defaultLibrary = Library.toJSON(message.defaultLibrary);
+    }
+    if (message.privateLibraries?.length) {
+      obj.privateLibraries = message.privateLibraries.map((e) => Library.toJSON(e));
     }
     return obj;
   },
@@ -704,7 +817,10 @@ export const GetUserLibraryResponse: MessageFns<GetUserLibraryResponse> = {
   },
   fromPartial<I extends Exact<DeepPartial<GetUserLibraryResponse>, I>>(object: I): GetUserLibraryResponse {
     const message = createBaseGetUserLibraryResponse();
-    message.libraries = object.libraries?.map((e) => Library.fromPartial(e)) || [];
+    message.defaultLibrary = (object.defaultLibrary !== undefined && object.defaultLibrary !== null)
+      ? Library.fromPartial(object.defaultLibrary)
+      : undefined;
+    message.privateLibraries = object.privateLibraries?.map((e) => Library.fromPartial(e)) || [];
     return message;
   },
 };

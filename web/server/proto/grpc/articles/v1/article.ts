@@ -15,6 +15,7 @@ export interface Article {
   id: number;
   doi: string;
   title: string;
+  url: string;
   /** List of authors */
   authors: Author[];
   abstract?: string | undefined;
@@ -94,6 +95,7 @@ function createBaseArticle(): Article {
     id: 0,
     doi: "",
     title: "",
+    url: "",
     authors: [],
     abstract: undefined,
     publicationYear: undefined,
@@ -114,23 +116,26 @@ export const Article: MessageFns<Article> = {
     if (message.title !== "") {
       writer.uint32(26).string(message.title);
     }
+    if (message.url !== "") {
+      writer.uint32(34).string(message.url);
+    }
     for (const v of message.authors) {
-      Author.encode(v!, writer.uint32(34).fork()).join();
+      Author.encode(v!, writer.uint32(42).fork()).join();
     }
     if (message.abstract !== undefined) {
-      writer.uint32(42).string(message.abstract);
+      writer.uint32(50).string(message.abstract);
     }
     if (message.publicationYear !== undefined) {
-      writer.uint32(48).int32(message.publicationYear);
+      writer.uint32(56).int32(message.publicationYear);
     }
     if (message.journalName !== undefined) {
-      writer.uint32(58).string(message.journalName);
+      writer.uint32(66).string(message.journalName);
     }
     if (message.createdAt !== undefined) {
-      Timestamp.encode(toTimestamp(message.createdAt), writer.uint32(66).fork()).join();
+      Timestamp.encode(toTimestamp(message.createdAt), writer.uint32(74).fork()).join();
     }
     if (message.updatedAt !== undefined) {
-      Timestamp.encode(toTimestamp(message.updatedAt), writer.uint32(74).fork()).join();
+      Timestamp.encode(toTimestamp(message.updatedAt), writer.uint32(82).fork()).join();
     }
     return writer;
   },
@@ -171,7 +176,7 @@ export const Article: MessageFns<Article> = {
             break;
           }
 
-          message.authors.push(Author.decode(reader, reader.uint32()));
+          message.url = reader.string();
           continue;
         }
         case 5: {
@@ -179,23 +184,23 @@ export const Article: MessageFns<Article> = {
             break;
           }
 
-          message.abstract = reader.string();
+          message.authors.push(Author.decode(reader, reader.uint32()));
           continue;
         }
         case 6: {
-          if (tag !== 48) {
+          if (tag !== 50) {
+            break;
+          }
+
+          message.abstract = reader.string();
+          continue;
+        }
+        case 7: {
+          if (tag !== 56) {
             break;
           }
 
           message.publicationYear = reader.int32();
-          continue;
-        }
-        case 7: {
-          if (tag !== 58) {
-            break;
-          }
-
-          message.journalName = reader.string();
           continue;
         }
         case 8: {
@@ -203,11 +208,19 @@ export const Article: MessageFns<Article> = {
             break;
           }
 
-          message.createdAt = fromTimestamp(Timestamp.decode(reader, reader.uint32()));
+          message.journalName = reader.string();
           continue;
         }
         case 9: {
           if (tag !== 74) {
+            break;
+          }
+
+          message.createdAt = fromTimestamp(Timestamp.decode(reader, reader.uint32()));
+          continue;
+        }
+        case 10: {
+          if (tag !== 82) {
             break;
           }
 
@@ -228,6 +241,7 @@ export const Article: MessageFns<Article> = {
       id: isSet(object.id) ? globalThis.Number(object.id) : 0,
       doi: isSet(object.doi) ? globalThis.String(object.doi) : "",
       title: isSet(object.title) ? globalThis.String(object.title) : "",
+      url: isSet(object.url) ? globalThis.String(object.url) : "",
       authors: globalThis.Array.isArray(object?.authors) ? object.authors.map((e: any) => Author.fromJSON(e)) : [],
       abstract: isSet(object.abstract) ? globalThis.String(object.abstract) : undefined,
       publicationYear: isSet(object.publicationYear) ? globalThis.Number(object.publicationYear) : undefined,
@@ -247,6 +261,9 @@ export const Article: MessageFns<Article> = {
     }
     if (message.title !== "") {
       obj.title = message.title;
+    }
+    if (message.url !== "") {
+      obj.url = message.url;
     }
     if (message.authors?.length) {
       obj.authors = message.authors.map((e) => Author.toJSON(e));
@@ -277,6 +294,7 @@ export const Article: MessageFns<Article> = {
     message.id = object.id ?? 0;
     message.doi = object.doi ?? "";
     message.title = object.title ?? "";
+    message.url = object.url ?? "";
     message.authors = object.authors?.map((e) => Author.fromPartial(e)) || [];
     message.abstract = object.abstract ?? undefined;
     message.publicationYear = object.publicationYear ?? undefined;
