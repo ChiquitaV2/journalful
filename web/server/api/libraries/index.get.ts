@@ -1,6 +1,42 @@
-import { generateMockLibrary } from '../mock/data'
+import {generateMockLibrary} from '../mock/data'
+import {useServices} from "~~/server/proto/useServices";
+import {GetUserLibraryRequest, ReadingStatus} from "~~/server/proto/grpc/library/v1/library";
 
-export default defineEventHandler(event => {
+export default defineEventHandler(async event => {
+
+  const librarySvr = await useServices().getLibraryServiceClient(event)
+  try {
+    const libriaires = await librarySvr.GetUserLibrary(GetUserLibraryRequest.fromJSON({userId: 1}))
+    console.log("libriaires", libriaires)
+    const defaultLibrary = libriaires.defaultLibrary
+    const privateLibraries = libriaires.privateLibraries
+    if (!defaultLibrary) {
+      return createError({
+        statusCode: 404,
+        statusMessage: "Default library not found"
+      })
+    }
+    return {
+      defaultLibrary,
+      privateLibraries,
+      stats: {
+        total: 1 + privateLibraries.length,
+        articles: defaultLibrary.articles.length + privateLibraries.reduce((sum, lib) => sum + lib.articles.length, 0),
+        completed: [defaultLibrary, ...privateLibraries]
+            .flatMap(lib => lib.articles)
+            .filter(article => article.readingStatus === ReadingStatus.READING_STATUS_READ).length
+      }
+    }
+  } catch (e: any) {
+    console.error("lookup error", e)
+    // For all errors besdies not found return the error
+    if (!e.message.includes("not found")) {
+      return createError({
+        statusCode: 500,
+        statusMessage: e.message
+      })
+    }
+  }
   // Generate mock libraries for the index page
   const defaultLibrary = generateMockLibrary(1, {
     name: 'My Reading List',

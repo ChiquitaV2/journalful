@@ -20,3 +20,6 @@ generate-sql:
 
 build:
 	go build -o bin/journalful cmd/server/main.go
+
+test:
+	go test -v ./...

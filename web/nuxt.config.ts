@@ -4,11 +4,7 @@ import tailwindcss from "@tailwindcss/vite";
 export default defineNuxtConfig({
   compatibilityDate: '2025-07-15',
   devtools: { enabled: true },
-  modules: [
-    '@nuxt/fonts',
-    '@nuxt/icon',
-    '@nuxt/image'
-  ],
+  modules: ['@nuxt/fonts', '@nuxt/icon', '@nuxt/image', 'nuxt-auth-utils'],
   css: [
     '~/assets/css/tailwind.css',
       '~/assets/css/glassmorphism.css'
@@ -26,13 +22,8 @@ export default defineNuxtConfig({
   runtimeConfig: {
     backendURL: process.env.BACKEND_URL || 'localhost:50052',
   },
-  ssr: true,
   typescript: {
     typeCheck: true
-  },
-  nitro: {
-    compressPublicAssets: true,
-    minify: true
   },
   vite: {
     plugins: [

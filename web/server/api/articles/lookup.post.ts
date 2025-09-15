@@ -19,7 +19,7 @@ export default defineEventHandler(async (event) => {
   const articlesSvr = await useServices().getArticlesServiceClient(event)
   try {
     return await articlesSvr.GetArticleByDOI(GetArticleByDOIRequest.fromJSON({doi}))
-  } catch (e) {
+  } catch (e: any) {
     console.error("lookup error", e)
     // For all errors besdies not found return the error
     if (!e.message.includes("not found")) {
@@ -33,7 +33,7 @@ export default defineEventHandler(async (event) => {
   try {
     const cratedArticle = await articlesSvr.CreateArticle(CreateArticleRequest.fromJSON({doi}))
     return await articlesSvr.GetArticle(GetArticleRequest.fromJSON({id: cratedArticle.id}))
-  } catch (e) {
+  } catch (e: any) {
     return createError({
       statusCode: 404,
       statusMessage: "Article dose not exist"

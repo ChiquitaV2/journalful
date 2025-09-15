@@ -1,6 +1,8 @@
 import { generateMockLibrary } from '../../mock/data'
 
-export default defineEventHandler(event => {
+export default defineEventHandler(async event => {
+  console.log("user session", await getUserSession(event))
+
   const id = Number(event.context.params?.id)
   
   // Generate mock library with consistent data for demo

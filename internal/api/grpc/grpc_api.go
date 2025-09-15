@@ -41,7 +41,13 @@ func NewServer(conn *sql.DB) *Server {
 
 // Register registers all the gRPC services and reflection.
 func (s *Server) Register() error {
-	s.server = grpc.NewServer()
+	s.server = grpc.NewServer(
+		grpc.ChainUnaryInterceptor(
+			RecoveryInterceptor,
+			LoggingInterceptor,
+			ErrorInterceptor,
+		),
+	)
 	// Enable gRPC reflection for debugging.
 	reflection.Register(s.server)
 
@@ -68,18 +74,15 @@ func (s *Server) Start(cfg *conf.Config) error {
 	addr := fmt.Sprintf(":%s", cfg.Server.Port)
 	lis, err := net.Listen("tcp", addr)
 	if err != nil {
-		// Correct error handling: return the error instead of just logging.
-		// Also using structured logging.
-		slog.Error("failed to listen", "address", addr, "error", err)
 		return fmt.Errorf("failed to listen on %s: %w", addr, err)
 	}
 
 	slog.Info("gRPC server starting", "address", lis.Addr().String())
-	// This is a blocking call.
-	if err := s.server.Serve(lis); err != nil {
-		slog.Error("failed to serve gRPC", "error", err)
-		return fmt.Errorf("failed to serve gRPC: %w", err)
-	}
+	go func() {
+		if err := s.server.Serve(lis); err != nil {
+			slog.Error("failed to serve gRPC", "error", err)
+		}
+	}()
 
 	return nil
 }
@@ -90,4 +93,5 @@ func (s *Server) Stop() {
 	// Set all services to NOT_SERVING.
 	s.health.Shutdown()
 	s.server.GracefulStop()
+	slog.Info("gRPC server stopped")
 }

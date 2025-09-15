@@ -3,8 +3,9 @@ package article
 import (
 	"context"
 	"database/sql"
-	"fmt"
 	article "github.com/chiquitav2/journalful/pkg/articles/v1"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 )
 
 type ArticleGrpcHandler struct {
@@ -13,6 +14,9 @@ type ArticleGrpcHandler struct {
 }
 
 func (h *ArticleGrpcHandler) GetArticle(ctx context.Context, request *article.GetArticleRequest) (*article.GetArticleResponse, error) {
+	if request.Id == 0 {
+		return nil, status.Error(codes.InvalidArgument, "article ID cannot be empty")
+	}
 	articleData, err := h.service.GetArticle(ctx, request.Id)
 	if err != nil {
 		return nil, err
@@ -22,8 +26,8 @@ func (h *ArticleGrpcHandler) GetArticle(ctx context.Context, request *article.Ge
 }
 
 func (h *ArticleGrpcHandler) GetArticleByDOI(ctx context.Context, request *article.GetArticleByDOIRequest) (*article.GetArticleByDOIResponse, error) {
-	if request == nil || request.Doi == "" {
-		return nil, fmt.Errorf("invalid request: %v", request)
+	if request.Doi == "" {
+		return nil, status.Error(codes.InvalidArgument, "DOI cannot be empty")
 	}
 
 	articleData, err := h.service.GetArticleByDOI(ctx, request.GetDoi())
@@ -44,6 +48,9 @@ func (h *ArticleGrpcHandler) ListArticles(ctx context.Context, request *article.
 }
 
 func (h *ArticleGrpcHandler) CreateArticle(ctx context.Context, request *article.CreateArticleRequest) (*article.CreateArticleResponse, error) {
+	if request.Doi == "" {
+		return nil, status.Error(codes.InvalidArgument, "DOI cannot be empty")
+	}
 	articleData, err := h.service.CreateArticle(ctx, request)
 	if err != nil {
 		return nil, err
@@ -52,6 +59,9 @@ func (h *ArticleGrpcHandler) CreateArticle(ctx context.Context, request *article
 }
 
 func (h *ArticleGrpcHandler) UpdateArticle(ctx context.Context, request *article.UpdateArticleRequest) (*article.UpdateArticleResponse, error) {
+	if request.Id == 0 {
+		return nil, status.Error(codes.InvalidArgument, "article ID cannot be empty")
+	}
 	articleData, err := h.service.UpdateArticle(ctx, request)
 	if err != nil {
 		return nil, err
@@ -60,6 +70,9 @@ func (h *ArticleGrpcHandler) UpdateArticle(ctx context.Context, request *article
 }
 
 func (h *ArticleGrpcHandler) DeleteArticle(ctx context.Context, request *article.DeleteArticleRequest) (*article.DeleteArticleResponse, error) {
+	if request.Id == 0 {
+		return nil, status.Error(codes.InvalidArgument, "article ID cannot be empty")
+	}
 	deletedArticle, err := h.service.DeleteArticle(ctx, request)
 	if err != nil {
 		return nil, err

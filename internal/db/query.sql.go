@@ -495,6 +495,59 @@ func (q *Queries) ListArticles(ctx context.Context) ([]Article, error) {
 	return items, nil
 }
 
+const listArticlesWithAuthors = `-- name: ListArticlesWithAuthors :many
+SELECT
+    a.id, a.doi, a.title, a.abstract, a.url, a.publication_year, a.journal_name, a.created_at, a.updated_at,
+    au.id, au.name, au.profile_id, au.created_at, au.updated_at
+FROM articles a
+LEFT JOIN article_authors aa ON a.id = aa.article_id
+LEFT JOIN authors au ON aa.author_id = au.id
+ORDER BY a.title, aa.author_order
+`
+
+type ListArticlesWithAuthorsRow struct {
+	Article Article
+	Author  Author
+}
+
+func (q *Queries) ListArticlesWithAuthors(ctx context.Context) ([]ListArticlesWithAuthorsRow, error) {
+	rows, err := q.db.QueryContext(ctx, listArticlesWithAuthors)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []ListArticlesWithAuthorsRow
+	for rows.Next() {
+		var i ListArticlesWithAuthorsRow
+		if err := rows.Scan(
+			&i.Article.ID,
+			&i.Article.Doi,
+			&i.Article.Title,
+			&i.Article.Abstract,
+			&i.Article.Url,
+			&i.Article.PublicationYear,
+			&i.Article.JournalName,
+			&i.Article.CreatedAt,
+			&i.Article.UpdatedAt,
+			&i.Author.ID,
+			&i.Author.Name,
+			&i.Author.ProfileID,
+			&i.Author.CreatedAt,
+			&i.Author.UpdatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const listAuthors = `-- name: ListAuthors :many
 SELECT id, name, profile_id, created_at, updated_at FROM authors ORDER BY name
 `

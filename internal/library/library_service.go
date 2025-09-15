@@ -6,6 +6,7 @@ import (
 	"github.com/chiquitav2/journalful/internal/db"
 	"github.com/chiquitav2/journalful/pkg/library/v1"
 	"google.golang.org/protobuf/types/known/timestamppb"
+	"log/slog"
 )
 
 type LibraryServiceInterface interface {
@@ -50,48 +51,98 @@ func (l *LibraryService) GetUserLibrary(ctx context.Context, request *library.Ge
 
 	var response []*library.Library
 	for _, lib := range libraries {
-		articles, err := l.repo.ListLibraryArticlesByLibraryID(ctx, lib.ID)
+		builtLib, err := l.buildLibrary(ctx, lib)
 		if err != nil {
+			slog.Error("error building library", "error", err.Error())
 			return nil, err
 		}
-
-		var libraryArticles []*library.LibraryArticle
-		for _, article := range articles {
-			notes := article.Notes.String
-			libraryArticles = append(libraryArticles, &library.LibraryArticle{
-				Id:              article.ID,
-				ArticleId:       article.ArticleID,
-				ReadingStatus:   library.ReadingStatus(article.ReadingStatus.Int16),
-				DateAdded:       timestamppb.New(article.Dateadded.Time),
-				Notes:           &notes,
-				ArticleTitle:    article.ArticleTitle,
-				Doi:             article.Doi,
-				PublicationYear: article.PublicationYear.Int32,
-			})
-		}
-		name := lib.Name.String
-		response = append(response, &library.Library{
-			Id:        lib.ID,
-			OwnerId:   lib.OwnerID,
-			Name:      name,
-			CreatedAt: timestamppb.New(lib.CreatedAt.Time),
-			UpdatedAt: timestamppb.New(lib.UpdatedAt.Time),
-			Articles:  libraryArticles,
-		})
+		response = append(response, builtLib)
 		if lib.Isdefault.Bool {
-			defaultLibrary = &library.Library{
-				Id:        lib.ID,
-				OwnerId:   lib.OwnerID,
-				Name:      name,
-				CreatedAt: timestamppb.New(lib.CreatedAt.Time),
-				UpdatedAt: timestamppb.New(lib.UpdatedAt.Time),
-				Articles:  libraryArticles,
-			}
+			defaultLibrary = builtLib
+		}
+	}
+	if defaultLibrary == nil {
+		id, err := l.createDefaultLibrary(ctx, request.UserId)
+		if err != nil {
+			slog.Error("error creating default library", "error", err.Error())
+			return nil, err
+		}
+		lib, err := l.repo.GetLibrary(ctx, id)
+		if err != nil {
+			slog.Error("error getting default library", "error", err)
+			return nil, err
+		}
+		defaultLibrary, err = l.buildLibrary(ctx, lib)
+		if err != nil {
+			slog.Error("error building default library", "error", err.Error())
+			return nil, err
 		}
 	}
 
 	return &library.GetUserLibraryResponse{
 		DefaultLibrary:   defaultLibrary,
 		PrivateLibraries: response,
+	}, nil
+}
+
+func (s *LibraryService) createDefaultLibrary(ctx context.Context, userID int64) (int64, error) {
+	result, err := s.repo.CreateLibrary(ctx, db.CreateLibraryParams{
+		OwnerID: userID,
+		Name: sql.NullString{
+			String: "My Library",
+			Valid:  true,
+		},
+		Description: sql.NullString{
+			String: "This is my default library.",
+			Valid:  true,
+		},
+		Ispublic: sql.NullBool{
+			Bool:  true,
+			Valid: true,
+		},
+		Isdefault: sql.NullBool{
+			Bool:  true,
+			Valid: true,
+		},
+	})
+	if err != nil {
+		return -1, err
+	}
+	id, err := result.LastInsertId()
+	if err != nil {
+		return -1, err
+	}
+	return id, nil
+}
+
+func (s *LibraryService) buildLibrary(ctx context.Context, lib db.Library) (*library.Library, error) {
+	articles, err := s.repo.ListLibraryArticlesByLibraryID(ctx, lib.ID)
+	if err != nil {
+		return nil, err
+	}
+
+	var libraryArticles []*library.LibraryArticle
+	for _, article := range articles {
+		notes := article.Notes.String
+		libraryArticles = append(libraryArticles, &library.LibraryArticle{
+			Id:              article.ID,
+			ArticleId:       article.ArticleID,
+			ReadingStatus:   library.ReadingStatus(article.ReadingStatus.Int16),
+			DateAdded:       timestamppb.New(article.Dateadded.Time),
+			Notes:           &notes,
+			ArticleTitle:    article.ArticleTitle,
+			Doi:             article.Doi,
+			PublicationYear: article.PublicationYear.Int32,
+		})
+	}
+	return &library.Library{
+		Id:          lib.ID,
+		OwnerId:     lib.OwnerID,
+		Name:        lib.Name.String,
+		Description: &lib.Description.String,
+		IsPublic:    lib.Ispublic.Bool,
+		Articles:    libraryArticles,
+		CreatedAt:   timestamppb.New(lib.CreatedAt.Time),
+		UpdatedAt:   timestamppb.New(lib.UpdatedAt.Time),
 	}, nil
 }

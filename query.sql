@@ -61,6 +61,16 @@ UPDATE articles SET doi = ?, title = ?, abstract = ?, url = ?, publication_year 
 -- name: DeleteArticle :exec
 DELETE FROM articles WHERE id = ?;
 
+-- name: ListArticlesWithAuthors :many
+SELECT
+    sqlc.embed(a),
+    sqlc.embed(au)
+FROM articles a
+LEFT JOIN article_authors aa ON a.id = aa.article_id
+LEFT JOIN authors au ON aa.author_id = au.id
+ORDER BY a.title, aa.author_order;
+
+
 
 -- Junction table for many-to-many relationship between articles and authors (article_authors)
 

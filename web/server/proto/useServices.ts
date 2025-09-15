@@ -7,18 +7,17 @@ export const useServices = () => {
     const {createAuthenticatedClient} = useGrpcClient();
 
     const getArticlesServiceClient = async (event: H3Event) => {
-        const authToken = getHeader(event, 'authorization')
-
+        const accessToken = (await getUserSession(event)).secure?.accessToken
         //Create rpc client
-        const client = createAuthenticatedClient(authToken)
+        const client = createAuthenticatedClient(accessToken)
         return new ArticlesServiceClientImpl(client)
     }
 
     const getLibraryServiceClient = async (event: H3Event) => {
-        const authToken = getHeader(event, 'authorization')
+        const accessToken = (await getUserSession(event)).secure?.accessToken
 
         //Create rpc client
-        const client = createAuthenticatedClient(authToken)
+        const client = createAuthenticatedClient(accessToken)
         return new LibraryServiceClientImpl(client)
     }
 

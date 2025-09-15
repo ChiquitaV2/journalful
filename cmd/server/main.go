@@ -33,8 +33,10 @@ func main() {
 		slog.Error("Failed to initialize appSvr", "error", err)
 		return
 	}
-	appSvr.Start()
-
+	if err := appSvr.Start(); err != nil {
+		slog.Error("Failed to start appSvr", "error", err)
+		return
+	}
 }
 
 // get config path from flags or environment variables and test that the file exists

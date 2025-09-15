@@ -23,62 +23,58 @@ func NewApp(config *conf.Config) *App {
 	}
 }
 func (s *App) Init() error {
-	slog.Info("App initialized")
+	slog.Info("initializing application")
 	// Initialize the database connection
-	s.db = connectDB(s.config.Database)
-	// load the database schema from the embedded schema
-	if s.db == nil {
-		slog.Error("Database connection is nil, cannot proceed with initialization")
-		return fmt.Errorf("failed to connect to the database")
+	db, err := connectDB(s.config.Database)
+	if err != nil {
+		return fmt.Errorf("failed to connect to the database: %w", err)
 	}
+	s.db = db
 
 	s.grpcApi = grpcapi.NewServer(s.db)
 
-	// Start the gRPC server here
-	// This is a placeholder for actual server start logic
 	if err := s.grpcApi.Register(); err != nil {
-		slog.Error("Failed to register gRPC API", "error", err)
-		return err
+		return fmt.Errorf("failed to register gRPC API: %w", err)
 	}
+	slog.Info("application initialized successfully")
 	return nil
 }
 
-func (s *App) Start() {
-	// Start the server here
-	slog.Info("App started")
-	// Example: http.ListenAndServe(":8080", nil)
-	// This is a placeholder; actual server logic would go here
+func (s *App) Start() error {
+	slog.Info("starting application")
 	if err := s.grpcApi.Start(s.config); err != nil {
-		slog.Error("Failed to start gRPC API", "error", err)
-	} else {
-		slog.Info("gRPC API started successfully")
+		return fmt.Errorf("failed to start gRPC API: %w", err)
 	}
+	slog.Info("application started successfully")
+	return nil
 }
 
 func (s *App) Stop() {
+	slog.Info("stopping application")
 	// Clean up resources here
+	if s.grpcApi != nil {
+		s.grpcApi.Stop()
+	}
 	if s.db != nil {
 		if err := s.db.Close(); err != nil {
-			slog.Error("Failed to close database connection", "error", err)
+			slog.Error("failed to close database connection", "error", err)
 		} else {
-			slog.Info("Database connection closed successfully")
+			slog.Info("database connection closed successfully")
 		}
 	}
-	slog.Info("App stopped")
+	slog.Info("application stopped successfully")
 }
 
-func connectDB(dbConfig conf.DatabaseConfig) *sql.DB {
+func connectDB(dbConfig conf.DatabaseConfig) (*sql.DB, error) {
 	connectionString := fmt.Sprintf("%s:%s@tcp(%s:%s)/%s?parseTime=true",
 		dbConfig.User, dbConfig.Password, dbConfig.Host, dbConfig.Port, dbConfig.Name)
 	db, err := sql.Open("mysql", connectionString)
 	if err != nil {
-		slog.Error("Failed to connect to database", "error", err)
-		return nil
+		return nil, fmt.Errorf("failed to open database connection: %w", err)
 	}
 	if err = db.Ping(); err != nil {
-		slog.Error("Failed to ping database", "error", err)
-		return nil
+		return nil, fmt.Errorf("failed to ping database: %w", err)
 	}
-	slog.Info("Connected to database successfully")
-	return db
+	slog.Info("connected to database successfully")
+	return db, nil
 }

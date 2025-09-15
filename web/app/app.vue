@@ -8,6 +8,7 @@
 </template>
 
 <script setup>
+
 // Set up the head for SEO and mobile optimization
 useHead({
   title: 'Academic Reading List Manager',

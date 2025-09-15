@@ -8,6 +8,7 @@ import (
 	"io"
 	"log/slog"
 	"net/http"
+	"time"
 )
 
 // CrossRef API response structs
@@ -34,10 +35,16 @@ type CrossRefDate struct {
 	DateParts [][]int `json:"date-parts"`
 }
 
-type MetadataService struct{}
+type MetadataService struct {
+	client *http.Client
+}
 
 func NewMetadataService() *MetadataService {
-	return &MetadataService{}
+	return &MetadataService{
+		client: &http.Client{
+			Timeout: 10 * time.Second,
+		},
+	}
 }
 
 func (s *MetadataService) FetchAndPrepareArticle(doi string) (*db.CreateArticleParams, []string, error) {
@@ -82,13 +89,21 @@ func (s *MetadataService) FetchAndPrepareArticle(doi string) (*db.CreateArticleP
 func (s *MetadataService) fetchArticleMetadataFromDOI(doi string) (*CrossRefMessage, error) {
 	url := fmt.Sprintf("https://api.crossref.org/v1/works/%s", doi)
 
-	resp, err := http.Get(url)
+	req, err := http.NewRequest("GET", url, nil)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create HTTP request: %w", err)
+	}
+
+	req.Header.Set("User-Agent", "Journalful/1.0")
+
+	resp, err := s.client.Do(req)
 	if err != nil {
 		return nil, fmt.Errorf("failed to make HTTP request to CrossRef API: %w", err)
 	}
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
+		slog.Error("CrossRef API returned non-OK status", "status", resp.Status, "doi", doi)
 		return nil, fmt.Errorf("CrossRef API returned non-OK status: %s", resp.Status)
 	}
 

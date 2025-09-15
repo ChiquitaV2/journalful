@@ -109,7 +109,7 @@ const libraryNames = [
 ]
 
 function generateMockTitle(): string {
-  return titles[Math.floor(Math.random() * titles.length)]
+  return titles[Math.floor(Math.random() * titles.length)] ?? 'No title available.'
 }
 
 function generateMockAuthors(): Array<{ id: number; name: string; profileId: number }> {
@@ -119,12 +119,12 @@ function generateMockAuthors(): Array<{ id: number; name: string; profileId: num
   for (let i = 0; i < count; i++) {
     selectedAuthors.push({
       id: Math.floor(Math.random() * 10000),
-      name: authors[Math.floor(Math.random() * authors.length)],
+      name: authors[Math.floor(Math.random() * authors.length)] ?? 'Unknown Author',
       profileId: Math.floor(Math.random() * 100)
     })
   }
   
-  return selectedAuthors
+  return selectedAuthors ?? []
 }
 
 function generateMockAbstract(): string {
@@ -136,15 +136,15 @@ function generateMockAbstract(): string {
     'We propose a multi-modal approach to research document understanding, combining text analysis with visual element recognition for comprehensive academic literature processing.'
   ]
   
-  return abstracts[Math.floor(Math.random() * abstracts.length)]
+  return abstracts[Math.floor(Math.random() * abstracts.length)] ?? 'No abstract available.'
 }
 
 function generateMockJournal(): string {
-  return journals[Math.floor(Math.random() * journals.length)]
+  return journals[Math.floor(Math.random() * journals.length)] ?? 'Nature Machine Intelligence'
 }
 
 function generateMockLibraryName(): string {
-  return libraryNames[Math.floor(Math.random() * libraryNames.length)]
+  return libraryNames[Math.floor(Math.random() * libraryNames.length)] ?? 'My Reading List'
 }
 
 function generateMockDescription(): string {
@@ -156,7 +156,7 @@ function generateMockDescription(): string {
     'Current research papers addressing key challenges and innovations.'
   ]
   
-  return descriptions[Math.floor(Math.random() * descriptions.length)]
+  return descriptions[Math.floor(Math.random() * descriptions.length)] ?? 'No description available.'
 }
 
 function generateMockNotes(): string {
@@ -168,7 +168,7 @@ function generateMockNotes(): string {
     'Novel approach that could inspire our next research direction.'
   ]
   
-  return notes[Math.floor(Math.random() * notes.length)]
+  return notes[Math.floor(Math.random() * notes.length)] ?? 'No notes available.'
 }
 
 function getRandomStatus(): ReadingStatus {
@@ -185,9 +185,9 @@ function getRandomStatus(): ReadingStatus {
   let cumulative = 0
   
   for (let i = 0; i < weights.length; i++) {
-    cumulative += weights[i]
+    cumulative += (weights[i] ?? 1)
     if (random <= cumulative) {
-      return statuses[i]
+      return statuses[i] ?? ReadingStatus.READING_STATUS_TO_READ
     }
   }
   

@@ -8,13 +8,13 @@ export const formatAuthors = (authors: Array<{ name: string }> | undefined): str
   // if (authors.length === 2) return `${authors[0].name} & ${authors[1].name}`
   switch (authors.length) {
     case 1:
-      return authors[0].name
+      return authors[0]?.name || 'Unknown'
     case 2:
-      return `${authors[0].name} & ${authors[1].name}`
+      return `${authors[0]?.name} & ${authors[1]?.name}`
     case 3:
-      return `${authors[0].name}, ${authors[1].name}, & ${authors[2].name}`
+      return `${authors[0]?.name}, ${authors[1]?.name}, & ${authors[2]?.name}`
     default:
-      return `${authors[0].name} et al.`
+      return `${authors[0]?.name} et al.`
   }
 }
 
