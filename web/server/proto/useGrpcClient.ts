@@ -22,7 +22,9 @@ export const useGrpcClient = () => {
     const createAuthenticatedClient = (token?: string): Rpc => {
         let channelCredentials;
         if (token) {
-            const sslCreds = credentials.createSsl();
+            const sslCreds = credentials.createSsl(null, null, null, {
+                rejectUnauthorized: false,
+            });
             const userCallCreds = createUserCallCredentials(token);
             channelCredentials = credentials.combineChannelCredentials(sslCreds, userCallCreds);
         } else {

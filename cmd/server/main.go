@@ -2,14 +2,17 @@ package main
 
 import (
 	"flag"
-	"github.com/chiquitav2/journalful/internal/app"
-	"github.com/chiquitav2/journalful/pkg/conf"
 	"log/slog"
 	"os"
+
+	"github.com/chiquitav2/journalful/internal/app"
+	"github.com/chiquitav2/journalful/pkg/conf"
 )
 
 var (
 	configPath = flag.String("config", "config.yaml", "path to config file")
+	certFile   = flag.String("cert", "testdata/certs/server.crt", "path to TLS certificate file")
+	keyFile    = flag.String("key", "testdata/certs/server.key", "path to TLS key file")
 )
 
 func main() {
@@ -27,7 +30,7 @@ func main() {
 
 	// Initialize the application with the loaded configuration
 
-	appSvr := app.NewApp(cfg)
+	appSvr := app.NewApp(cfg, *certFile, *keyFile)
 	err = appSvr.Init()
 	if err != nil {
 		slog.Error("Failed to initialize appSvr", "error", err)

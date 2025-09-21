@@ -55,6 +55,13 @@ const test = async () => {
   const {data} = await useFetch('/api/libraries/1')
   console.log("data", data.value)
 }
+
+onMounted(async () => {
+  await fetch()
+  console.log("session", session.value)
+  console.log("user", user.value)
+  console.log("loggedIn", loggedIn.value)
+})
 </script>
 
 <style scoped>

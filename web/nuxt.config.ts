@@ -20,7 +20,15 @@ export default defineNuxtConfig({
     }
   },
   runtimeConfig: {
-    backendURL: process.env.BACKEND_URL || 'localhost:50052',
+      backendURL: process.env.BACKEND_URL || 'localhost:50052',
+      session: {
+        password: process.env.NUXT_SESSION_PASSWORD || '',
+          cookie: {
+            secure: false,
+              httpOnly: false
+          }
+
+      }
   },
   typescript: {
     typeCheck: true

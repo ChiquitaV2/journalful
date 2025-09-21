@@ -4,22 +4,28 @@ import (
 	"database/sql"
 	_ "embed"
 	"fmt"
+	"log/slog"
+	"time"
+
 	"github.com/chiquitav2/journalful/internal/api"
 	"github.com/chiquitav2/journalful/internal/api/grpc"
 	"github.com/chiquitav2/journalful/pkg/conf"
 	_ "github.com/go-sql-driver/mysql"
-	"log/slog"
 )
 
 type App struct {
-	grpcApi api.ApiModule
-	db      *sql.DB
-	config  *conf.Config
+	grpcApi  api.ApiModule
+	db       *sql.DB
+	config   *conf.Config
+	certFile string
+	keyFile  string
 }
 
-func NewApp(config *conf.Config) *App {
+func NewApp(config *conf.Config, certFile, keyFile string) *App {
 	return &App{
-		config: config,
+		config:   config,
+		certFile: certFile,
+		keyFile:  keyFile,
 	}
 }
 func (s *App) Init() error {
@@ -31,7 +37,7 @@ func (s *App) Init() error {
 	}
 	s.db = db
 
-	s.grpcApi = grpcapi.NewServer(s.db)
+	s.grpcApi = grpcapi.NewServer(s.db, s.config, s.certFile, s.keyFile)
 
 	if err := s.grpcApi.Register(); err != nil {
 		return fmt.Errorf("failed to register gRPC API: %w", err)
@@ -72,6 +78,10 @@ func connectDB(dbConfig conf.DatabaseConfig) (*sql.DB, error) {
 	if err != nil {
 		return nil, fmt.Errorf("failed to open database connection: %w", err)
 	}
+	// Configure connection pooling
+	db.SetMaxOpenConns(25)                 // Max number of open connections
+	db.SetMaxIdleConns(5)                  // Max number of idle connections
+	db.SetConnMaxLifetime(5 * time.Minute) // Max connection reuse time
 	if err = db.Ping(); err != nil {
 		return nil, fmt.Errorf("failed to ping database: %w", err)
 	}

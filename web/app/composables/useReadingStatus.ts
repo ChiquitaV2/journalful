@@ -1,5 +1,5 @@
 import { ReadingStatus } from '#shared/types'
-import { getStatusLabel, getStatusColor, getStatusIcon, calculateProgress, getNextStatus } from '../../utils'
+import { getStatusLabel, getStatusColor, getStatusIcon, calculateProgress, getNextStatus } from '~/utils'
 
 /**
  * Composable for reading status management

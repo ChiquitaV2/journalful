@@ -12,6 +12,7 @@ declare module '#auth-utils' {
         accessToken: string
         refreshToken: string
         idToken: string
+        expiresAt: number
         // Add your own fields
     }
 }

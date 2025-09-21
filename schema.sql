@@ -2,11 +2,13 @@
 CREATE TABLE profiles
 (
     id          BIGINT AUTO_INCREMENT PRIMARY KEY,
+    user_id     VARCHAR(255) NOT NULL,
     name        VARCHAR(100) NOT NULL,
     bio         TEXT,
     institution VARCHAR(100),
     created_at  TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at  TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+    updated_at  TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    UNIQUE INDEX idx_profiles_user_id (user_id)
 );
 
 -- Authors (can be linked to a profile, but don't have to be)

@@ -1,4 +1,4 @@
-import { copyToClipboard, shareContent } from '../../utils'
+import { copyToClipboard, shareContent } from '~/utils'
 
 /**
  * Composable for sharing functionality

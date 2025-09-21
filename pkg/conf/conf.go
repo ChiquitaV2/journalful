@@ -2,9 +2,10 @@ package conf
 
 import (
 	"fmt"
+	"log/slog"
+
 	"github.com/gookit/config/v2"
 	"github.com/gookit/config/v2/yaml"
-	"log/slog"
 )
 
 type ConfigInterface interface {
@@ -39,8 +40,11 @@ func (c DatabaseConfig) validate() error {
 }
 
 type ServerConfig struct {
-	Host string `yaml:"host" env:"SERVER_HOST" default:"${SERVER_HOST | localhost}"`
-	Port string `yaml:"port" env:"SERVER_PORT" default:"${SERVER_PORT | 50051}"`
+	Host     string `yaml:"host" env:"SERVER_HOST" default:"${SERVER_HOST | localhost}"`
+	Port     string `yaml:"port" env:"SERVER_PORT" default:"${SERVER_PORT | 50051}"`
+	UseTLS   bool   `yaml:"useTLS" env:"SERVER_USE_TLS" default:"false"`
+	CertFile string `yaml:"certFile" env:"SERVER_CERT_FILE"`
+	KeyFile  string `yaml:"keyFile" env:"SERVER_KEY_FILE"`
 }
 
 func (c ServerConfig) validate() error {
@@ -50,12 +54,45 @@ func (c ServerConfig) validate() error {
 	if c.Port == "" {
 		return fmt.Errorf("server port is required")
 	}
+	if c.UseTLS {
+		if c.CertFile == "" {
+			return fmt.Errorf("server cert file is required when TLS is enabled")
+		}
+		if c.KeyFile == "" {
+			return fmt.Errorf("server key file is required when TLS is enabled")
+		}
+	}
+	return nil
+}
+
+type ZitadelConfig struct {
+	Domain       string `yaml:"domain"`
+	ClientID     string `yaml:"clientID"`
+	ClientSecret string `yaml:"clientSecret"`
+	KeyPath      string `yaml:"keyPath"`
+	Insecure     bool   `yaml:"insecure"`
+}
+
+func (c ZitadelConfig) validate() error {
+	if c.Domain == "" {
+		return fmt.Errorf("zitadel domain is required")
+	}
+	if c.KeyPath == "" {
+		return fmt.Errorf("either zitadel key path or client ID and client secret are required")
+	}
+	//if c.ClientID == "" {
+	//	return fmt.Errorf("zitadel client ID is required")
+	//}
+	//if c.ClientSecret == "" {
+	//	return fmt.Errorf("zitadel client secret is required")
+	//}
 	return nil
 }
 
 type Config struct {
 	Server   ServerConfig   `yaml:"server"`
 	Database DatabaseConfig `yaml:"database"`
+	Zitadel  ZitadelConfig  `yaml:"zitadel"`
 }
 
 func (c Config) validate() error {
@@ -64,7 +101,12 @@ func (c Config) validate() error {
 		slog.Error("Error loading server config", "error", err)
 		return err
 	}
-	//err = c.DatabaseConfig.validate()
+	err = c.Zitadel.validate()
+	if err != nil {
+		slog.Error("Error loading zitadel config", "error", err)
+		return err
+	}
+	err = c.Database.validate()
 	if err != nil {
 		slog.Error("Error loading database config", "error", err)
 		return err

@@ -3,7 +3,15 @@ import {GetArticleRequest} from "~~/server/proto/grpc/articles/v1/article";
 import {generateMockArticle} from "~~/server/api/mock/data";
 
 export default defineEventHandler(async event => {
-  return generateMockArticle(1, {
+    const articlesSvr = await useServices().getArticlesServiceClient(event)
+    const id = Number(event.context.params?.id)
+    if (!id) createError({
+        statusCode: 400,
+        statusMessage: 'ID is required'
+    })
+    return (await articlesSvr.GetArticle(GetArticleRequest.fromJSON({id}))).article
+
+    return generateMockArticle(1, {
     title: "Machine Learning Approaches to Academic Literature Analysis",
     authors: [
       { id: 1, name: "Dr. Sarah Chen", profileId: 1 },
@@ -34,12 +42,5 @@ export default defineEventHandler(async event => {
     ]
   })
 
-  const articlesSvr = await useServices().getArticlesServiceClient(event)
-  const id = Number(event.context.params?.id)
-  if (!id) createError({
-    statusCode: 400,
-    statusMessage: 'ID is required'
-  })
-  return await articlesSvr.GetArticle(GetArticleRequest.fromJSON({id}))
 
 })

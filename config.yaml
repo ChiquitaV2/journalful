@@ -1,9 +1,16 @@
 server:
   host: localhost
   port: 50052
+  useTLS: true
+  certFile: "/certs/server.crt"
+  keyFile: "/certs/server.key"
 database:
   host: database.journalful.orb.local
   port: 3306
   user: service
   password: service_password
   name: journalful
+zitadel:
+  domain: "auth.quantumdev.org"
+  keypath: "./key.json"
+  insecure: true

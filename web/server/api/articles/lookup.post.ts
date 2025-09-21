@@ -8,6 +8,9 @@ import {
 export default defineEventHandler(async (event) => {
   const body = await readBody(event)
   const { doi } = body
+    console.log(body)
+    const session = await requireUserSession(event)
+    console.log(session)
 
   if (!doi) {
     throw createError({

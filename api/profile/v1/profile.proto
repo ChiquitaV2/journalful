@@ -24,7 +24,6 @@ service ProfileService {
 }
 
 message GetProfileRequest {
-  int64 id = 1;
 }
 
 message GetProfileResponse {

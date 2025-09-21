@@ -15,10 +15,7 @@ type ProfileGrpcHandler struct {
 }
 
 func (p ProfileGrpcHandler) GetProfile(ctx context.Context, request *profile.GetProfileRequest) (*profile.GetProfileResponse, error) {
-	if request == nil || request.Id == 0 {
-		return nil, ErrInvalidRequest
-	}
-	profileData, err := p.profileService.GetProfile(ctx, request.Id)
+	profileData, err := p.profileService.GetProfile(ctx)
 	if err != nil {
 		return nil, err
 	}

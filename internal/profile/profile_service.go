@@ -29,10 +29,11 @@ func NewProfileService(conn *sql.DB) *ProfileService {
 	}
 }
 
-func (p *ProfileService) GetProfile(ctx context.Context, id int64) (*profile.GetProfileResponse, error) {
+func (p *ProfileService) GetProfile(ctx context.Context) (*profile.GetProfileResponse, error) {
+	userID := ctx.Value("userID").(string)
 
 	// Fetch the profile from the database
-	profileData, err := p.queries.GetProfile(ctx, id)
+	profileData, err := p.queries.GetProfileByUserID(ctx, userID)
 	if err != nil {
 		return nil, ErrProfileNotFound
 	}
@@ -43,8 +44,10 @@ func (p *ProfileService) GetProfile(ctx context.Context, id int64) (*profile.Get
 }
 
 func (p *ProfileService) CreateProfile(ctx context.Context, request *profile.CreateProfileRequest) (*profile.CreateProfileResponse, error) {
+	userID := ctx.Value("userID").(string)
 
 	result, err := p.queries.CreateProfile(ctx, db.CreateProfileParams{
+		UserID:      userID,
 		Name:        request.Name,
 		Bio:         sql.NullString{String: *request.Bio, Valid: request.Bio != nil},
 		Institution: sql.NullString{String: *request.Institution, Valid: request.Institution != nil},

@@ -1,13 +1,16 @@
 -- Profiles of users/researchers
 
 -- name: GetProfile :one
-SELECT * FROM profiles WHERE id = ? LIMIT 1;
+SELECT * FROM profiles WHERE user_id = ? LIMIT 1;
+
+-- name: GetProfileByUserID :one
+SELECT * FROM profiles WHERE user_id = ? LIMIT 1;
 
 -- name: ListProfiles :many
 SELECT * FROM profiles ORDER BY name;
 
 -- name: CreateProfile :execresult
-INSERT INTO profiles (name, bio, institution) VALUES (?, ?, ?);
+INSERT INTO profiles (user_id, name, bio, institution) VALUES (?, ?, ?, ?);
 
 -- name: UpdateProfile :exec
 UPDATE profiles SET name = ?, bio = ?, institution = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?;

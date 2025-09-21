@@ -1,4 +1,4 @@
-import { formatAuthors, formatDate, formatRelativeTime } from '../../utils'
+import { formatAuthors, formatDate, formatRelativeTime } from '~/utils'
 
 /**
  * Composable for common formatting functions

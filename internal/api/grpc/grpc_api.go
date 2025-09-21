@@ -1,16 +1,20 @@
 package grpcapi // Renamed package for clarity and to avoid conflicts.
 
 import (
+	"context"
 	"database/sql"
 	"fmt" // For error wrapping
+	"log/slog"
+	"net"
+
+	"github.com/chiquitav2/journalful/internal/auth"
 	libraryImp "github.com/chiquitav2/journalful/internal/library"
 	profileImp "github.com/chiquitav2/journalful/internal/profile"
 	"github.com/chiquitav2/journalful/pkg/library/v1"
 	"github.com/chiquitav2/journalful/pkg/profile/v1"
-	"log/slog"
-	"net"
 
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/health"
 	healthpb "google.golang.org/grpc/health/grpc_health_v1"
 	"google.golang.org/grpc/reflection"
@@ -25,27 +29,47 @@ import (
 // The name is changed from GrpcService to Server for brevity, as it's in a grpcapi package.
 type Server struct {
 	api.ApiModule
-	dbConn *sql.DB
-	server *grpc.Server
-	health *health.Server
+	dbConn   *sql.DB
+	server   *grpc.Server
+	health   *health.Server
+	config   *conf.Config
+	certFile string
+	keyFile  string
 }
 
 // NewServer creates a new gRPC server.
 // Renamed from NewGrpcService.
-func NewServer(conn *sql.DB) *Server {
+func NewServer(conn *sql.DB, cfg *conf.Config, certFile, keyFile string) *Server {
 	return &Server{
-		dbConn: conn,
-		health: health.NewServer(), // Initialize health server here.
+		dbConn:   conn,
+		health:   health.NewServer(), // Initialize health server here.
+		config:   cfg,
+		certFile: certFile,
+		keyFile:  keyFile,
 	}
 }
 
 // Register registers all the gRPC services and reflection.
 func (s *Server) Register() error {
+	authorizer, err := auth.NewZitadelAuthorizer(context.Background(), s.config.Zitadel.Domain, s.config.Zitadel.KeyPath)
+	if err != nil {
+		return fmt.Errorf("failed to create zitadel authorizer: %w", err)
+	}
+
+	authInterceptor := NewAuthInterceptor(*authorizer)
+
+	creds, err := credentials.NewServerTLSFromFile(s.certFile, s.keyFile)
+	if err != nil {
+		return fmt.Errorf("failed to load TLS keys: %w", err)
+	}
+
 	s.server = grpc.NewServer(
+		grpc.Creds(creds),
 		grpc.ChainUnaryInterceptor(
 			RecoveryInterceptor,
 			LoggingInterceptor,
 			ErrorInterceptor,
+			authInterceptor.Unary(),
 		),
 	)
 	// Enable gRPC reflection for debugging.
@@ -78,11 +102,9 @@ func (s *Server) Start(cfg *conf.Config) error {
 	}
 
 	slog.Info("gRPC server starting", "address", lis.Addr().String())
-	go func() {
-		if err := s.server.Serve(lis); err != nil {
-			slog.Error("failed to serve gRPC", "error", err)
-		}
-	}()
+	if err := s.server.Serve(lis); err != nil {
+		return fmt.Errorf("failed to serve gRPC: %w", err)
+	}
 
 	return nil
 }

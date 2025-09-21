@@ -17,49 +17,7 @@ interface TokenResponse {
     token_type: string
 }
 
-// Define the structure of the introspection response from Zitadel
-interface IntrospectionResponse {
-    active: boolean
-    scope: string
-    client_id: string
-    token_type: string
-    exp: number
-    iat: number
-    sub: string
-    aud: string[]
-    iss: string
-    jti: string
-    username?: string
-}
 
-// --- Helper Functions ---
-
-/**
- * Validates the access token against Zitadel's introspection endpoint.
- * @returns `true` if the token is active, `false` otherwise.
- */
-async function validateAccessToken(
-    accessToken: string,
-    introspectionUrl: string,
-    credentials: string,
-): Promise<boolean> {
-    try {
-        const introspectionBody = new URLSearchParams({token: accessToken})
-        const response = await $fetch<IntrospectionResponse>(introspectionUrl, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/x-www-form-urlencoded',
-                'Authorization': `Basic ${credentials}`,
-            },
-            body: introspectionBody.toString(),
-        })
-        return response.active
-    } catch (error) {
-        console.error('Error during token introspection:', error)
-        // If introspection fails, it's safer to assume the token is invalid/expired.
-        return false
-    }
-}
 
 /**
  * Refreshes the access token using the refresh token.
@@ -141,18 +99,19 @@ export default defineNitroPlugin((nitroApp: NitroApp) => {
         const accessToken = session.secure?.accessToken
         const refreshToken = session.secure?.refreshToken
 
-        // If there's no access token, the user is not logged in.
-        if (!accessToken)
+        const expiresAt = session.secure?.expiresAt
+
+        // If there's no access token or expiration, the user is not logged in.
+        if (!accessToken || !expiresAt) {
             return
+        }
 
-        const introspectionUrl = `https://${NUXT_OAUTH_ZITADEL_DOMAIN}/oauth/v2/introspect`
-        const tokenUrl = `https://${NUXT_OAUTH_ZITADEL_DOMAIN}/oauth/v2/token`
-        const credentials = Buffer.from(`${NUXT_OAUTH_ZITADEL_CLIENT_ID}:${NUXT_OAUTH_ZITADEL_CLIENT_SECRET}`).toString('base64')
-
-        // --- 2. Validate Token ---
-        const isTokenValid = await validateAccessToken(accessToken, introspectionUrl, credentials)
-        if (isTokenValid)
+        // --- 2. Check Token Expiration ---
+        // Check if the token is expired or will expire in the next 60 seconds.
+        const isTokenExpired = expiresAt < (Date.now() + 60 * 1000)
+        if (!isTokenExpired) {
             return // Token is valid, proceed with the request.
+        }
 
         // --- 3. Refresh Token ---
         // If we reach here, the access token is invalid or expired.
@@ -161,6 +120,7 @@ export default defineNitroPlugin((nitroApp: NitroApp) => {
             return sendError(event, createError({statusCode: 401, statusMessage: 'Unauthorized: Session expired.'}))
         }
 
+        const tokenUrl = `https://${NUXT_OAUTH_ZITADEL_DOMAIN}/oauth/v2/token`
         const newTokens = await refreshSessionTokens(refreshToken, tokenUrl, NUXT_OAUTH_ZITADEL_CLIENT_ID, NUXT_OAUTH_ZITADEL_CLIENT_SECRET)
 
         if (!newTokens) {

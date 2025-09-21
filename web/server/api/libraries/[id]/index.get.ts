@@ -1,11 +1,22 @@
 import { generateMockLibrary } from '../../mock/data'
+import {useServices} from "~~/server/proto/useServices";
 
 export default defineEventHandler(async event => {
-  console.log("user session", await getUserSession(event))
-
   const id = Number(event.context.params?.id)
-  
-  // Generate mock library with consistent data for demo
+  const { user } = await getUserSession(event)
+  if (!user) {
+    createError({
+      statusCode: 401,
+      statusMessage: 'Unauthorized'
+    })
+  }
+  // Generate mock library with consistent data for dem
+  const librarysvr = await useServices().getLibraryServiceClient(event)
+  if (!id) createError({
+        statusCode: 400,
+        statusMessage: 'ID is required'
+    })
+
   return generateMockLibrary(id, {
     name: "Machine Learning Research",
     description: "A curated collection of papers on machine learning, deep learning, and AI research.",

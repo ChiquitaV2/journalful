@@ -7,6 +7,7 @@ services:
       - "--providers.docker=true"
       - "--providers.docker.exposedbydefault=false"
       - "--entrypoints.web.address=:80"
+      - "--entrypoints.websecure.address=:443"
     ports:
       - "80:80"
       - "443:443"
@@ -33,19 +34,24 @@ services:
       - database
     environment:
       SERVER_HOST: localhost
-      SERVER_PORT: 50051
+      SERVER_PORT: 50052
       DB_HOST: journalful_db
       DB_PORT: 3306
       DB_USER: service
       DB_PASSWORD: service_password
       DB_NAME: journalful
+      CERT_FILE: /certs/server.crt
+      KEY_FILE: /certs/server.key
     ports:
-      - "50051:50051"
+      - "50052:50052"
+    volumes:
+      - ./deployments/compose/certs:/certs
     labels:
       traefik.enable: "true"
-      traefik.http.routers.backend.entrypoints: "web"
-      traefik.http.services.backend.loadbalancer.server.port: "80"
-      traefik.http.services.backend.loadbalancer.server.scheme: "h2c"
+      traefik.http.routers.backend.entrypoints: "websecure"
+      traefik.http.routers.backend.tls: "true"
+      traefik.http.services.backend.loadbalancer.server.port: "50052"
+      traefik.http.services.backend.loadbalancer.server.scheme: "https"
 
 volumes:
   db_data:
