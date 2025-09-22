@@ -4,14 +4,16 @@ import (
 	context "context"
 	"database/sql"
 	"fmt"
+
 	"github.com/chiquitav2/journalful/internal/db"
 
-	"github.com/chiquitav2/journalful/pkg/articles/v1"
+	"log/slog"
+
+	article "github.com/chiquitav2/journalful/pkg/articles/v1"
 	v1 "github.com/chiquitav2/journalful/pkg/profile/v1"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/timestamppb"
-	"log/slog"
 )
 
 type ArticleService interface {
@@ -120,14 +122,65 @@ func (s *ArticleSerivceImp) CreateArticle(ctx context.Context, request *article.
 	if request == nil || request.Doi == "" {
 		return nil, status.Error(codes.InvalidArgument, "invalid request: DOI is required")
 	}
-	meta, normalizedAuthors, err := s.metadataSvc.FetchAndPrepareArticle(request.Doi)
-	if err != nil {
-		slog.Error("failed to fetch article metadata from DOI", "doi", request.Doi, "error", err)
-		return nil, status.Error(codes.Internal, "failed to fetch article metadata from DOI")
-	}
-	if meta == nil {
-		slog.Warn("no metadata found for article", "doi", request.Doi)
-		return nil, status.Error(codes.NotFound, "no metadata found for article with DOI")
+
+	var meta *db.CreateArticleParams
+	var authorNames []string
+	var err error
+
+	// Try to fetch metadata from external sources first
+	meta, authorNames, err = s.metadataSvc.FetchAndPrepareArticle(request.Doi)
+	if err != nil || meta == nil {
+		// If external metadata fetch fails, use the provided request data
+		slog.Info("external metadata fetch failed, using provided data", "doi", request.Doi)
+
+		// Validate that we have at least basic required fields when metadata fetch fails
+		if request.Title == "" {
+			return nil, status.Error(codes.InvalidArgument, "title is required when metadata cannot be fetched")
+		}
+
+		// Create metadata from request
+		meta = &db.CreateArticleParams{
+			Doi:   request.Doi,
+			Title: request.Title,
+			Abstract: sql.NullString{
+				String: "",
+				Valid:  false,
+			},
+			PublicationYear: sql.NullInt32{
+				Int32: 0,
+				Valid: false,
+			},
+			JournalName: sql.NullString{
+				String: "",
+				Valid:  false,
+			},
+		}
+
+		// Set optional fields if provided
+		if request.Abstract != nil {
+			meta.Abstract = sql.NullString{
+				String: *request.Abstract,
+				Valid:  true,
+			}
+		}
+		if request.PublicationYear != nil {
+			meta.PublicationYear = sql.NullInt32{
+				Int32: *request.PublicationYear,
+				Valid: true,
+			}
+		}
+		if request.JournalName != nil {
+			meta.JournalName = sql.NullString{
+				String: *request.JournalName,
+				Valid:  true,
+			}
+		}
+
+		// Convert request authors to string slice
+		authorNames = make([]string, len(request.Authors))
+		for i, author := range request.Authors {
+			authorNames[i] = author.Name
+		}
 	}
 
 	// Create article
@@ -144,7 +197,7 @@ func (s *ArticleSerivceImp) CreateArticle(ctx context.Context, request *article.
 	}
 
 	// Create article authors
-	authors, err := s.FindOrCreateAuthors(ctx, normalizedAuthors)
+	authors, err := s.FindOrCreateAuthors(ctx, authorNames)
 	if err != nil {
 		slog.Error("failed to find or create authors", "error", err)
 		return nil, status.Error(codes.Internal, "failed to find or create authors")

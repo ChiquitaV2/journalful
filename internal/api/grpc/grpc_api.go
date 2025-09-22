@@ -29,23 +29,19 @@ import (
 // The name is changed from GrpcService to Server for brevity, as it's in a grpcapi package.
 type Server struct {
 	api.ApiModule
-	dbConn   *sql.DB
-	server   *grpc.Server
-	health   *health.Server
-	config   *conf.Config
-	certFile string
-	keyFile  string
+	dbConn *sql.DB
+	server *grpc.Server
+	health *health.Server
+	config *conf.Config
 }
 
 // NewServer creates a new gRPC server.
 // Renamed from NewGrpcService.
-func NewServer(conn *sql.DB, cfg *conf.Config, certFile, keyFile string) *Server {
+func NewServer(conn *sql.DB, cfg *conf.Config) *Server {
 	return &Server{
-		dbConn:   conn,
-		health:   health.NewServer(), // Initialize health server here.
-		config:   cfg,
-		certFile: certFile,
-		keyFile:  keyFile,
+		dbConn: conn,
+		health: health.NewServer(), // Initialize health server here.
+		config: cfg,
 	}
 }
 
@@ -58,7 +54,7 @@ func (s *Server) Register() error {
 
 	authInterceptor := NewAuthInterceptor(*authorizer)
 
-	creds, err := credentials.NewServerTLSFromFile(s.certFile, s.keyFile)
+	creds, err := credentials.NewServerTLSFromFile(s.config.Server.CertFile, s.config.Server.KeyFile)
 	if err != nil {
 		return fmt.Errorf("failed to load TLS keys: %w", err)
 	}

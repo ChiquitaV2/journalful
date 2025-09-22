@@ -1,25 +1,46 @@
 <template>
   <div>
-    <!-- Overview Stats -->
-    <section class="mb-6">
-      <div class="glass-card p-6">
-        <h2 class="text-lg font-semibold text-white mb-4">Overview</h2>
-        <div class="grid grid-cols-3 gap-4">
-          <div class="text-center">
-            <div class="text-2xl font-bold text-white">{{ totalLibraries }}</div>
-            <div class="text-sm text-gray-400">Libraries</div>
-          </div>
-          <div class="text-center">
-            <div class="text-2xl font-bold text-purple-300">{{ totalArticles }}</div>
-            <div class="text-sm text-gray-400">Articles</div>
-          </div>
-          <div class="text-center">
-            <div class="text-2xl font-bold text-green-300">{{ completedArticles }}</div>
-            <div class="text-sm text-gray-400">Completed</div>
+    <!-- Loading State -->
+    <div v-if="loading" class="flex items-center justify-center py-16">
+      <div class="glass-card p-8 text-center">
+        <Icon name="heroicons:arrow-path" class="h-8 w-8 text-white animate-spin mx-auto mb-4" />
+        <p class="text-white">Loading libraries...</p>
+      </div>
+    </div>
+
+    <!-- Error State -->
+    <div v-else-if="error" class="glass-card p-8 text-center">
+      <Icon name="heroicons:exclamation-triangle" class="h-16 w-16 text-red-400 mx-auto mb-4" />
+      <h3 class="text-xl font-semibold text-white mb-2">Error Loading Libraries</h3>
+      <p class="text-gray-400 mb-4">{{ error }}</p>
+      <button @click="loadLibraries" class="glass-button">
+        <Icon name="heroicons:arrow-path" class="h-4 w-4 mr-2" />
+        Try Again
+      </button>
+    </div>
+
+    <!-- Main Content -->
+    <div v-else>
+      <!-- Overview Stats -->
+      <section class="mb-6">
+        <div class="glass-card p-6">
+          <h2 class="text-lg font-semibold text-white mb-4">Overview</h2>
+          <div class="grid grid-cols-3 gap-4">
+            <div class="text-center">
+              <div class="text-2xl font-bold text-white">{{ totalLibraries }}</div>
+              <div class="text-sm text-gray-400">Libraries</div>
+            </div>
+            <div class="text-center">
+              <div class="text-2xl font-bold text-purple-300">{{ totalArticles }}</div>
+              <div class="text-sm text-gray-400">Articles</div>
+            </div>
+            <div class="text-center">
+              <div class="text-2xl font-bold text-green-300">{{ completedArticles }}</div>
+              <div class="text-sm text-gray-400">Completed</div>
+            </div>
           </div>
         </div>
-      </div>
-    </section>
+      </section>
 
     <!-- Default Library -->
     <section class="mb-6">
@@ -102,17 +123,18 @@
       @article-selected="handleArticleSelected"
     />
 
-    <!-- Delete Confirmation -->
-    <ConfirmDialog
-      v-if="showDeleteConfirm"
-      title="Delete Library"
-      :message="`Are you sure you want to delete '${deletingLibrary?.name}'? This action cannot be undone.`"
-      confirm-text="Delete"
-      cancel-text="Cancel"
-      variant="danger"
-      @confirm="confirmDelete"
-      @cancel="showDeleteConfirm = false"
-    />
+      <!-- Delete Confirmation -->
+      <ConfirmDialog
+        v-if="showDeleteConfirm"
+        title="Delete Library"
+        :message="`Are you sure you want to delete '${deletingLibrary?.name}'? This action cannot be undone.`"
+        confirm-text="Delete"
+        cancel-text="Cancel"
+        variant="danger"
+        @confirm="confirmDelete"
+        @cancel="showDeleteConfirm = false"
+      />
+    </div>
   </div>
 </template>
 
@@ -145,68 +167,62 @@ const showDeleteConfirm = ref(false)
 const editingLibrary = ref(null)
 const deletingLibrary = ref(null)
 
-// Mock data - replace with real API calls
-const defaultLibrary = ref({
-  id: 1,
-  name: 'My Reading List',
-  userId: 1,
-  articles: [
-    {
-      id: 1,
-      articleTitle: 'Deep Learning for Academic Research',
-      doi: '10.1038/s42256-024-00001-1',
-      readingStatus: ReadingStatus.READING_STATUS_READING,
-      addedAt: new Date('2024-01-15'),
-      publicationYear: 2024
+// Data from API
+const defaultLibrary = ref(null)
+const privateLibraries = ref([])
+const loading = ref(true)
+const error = ref(null)
+
+// Load libraries data
+const loadLibraries = async () => {
+  try {
+    loading.value = true
+    error.value = null
+    
+    console.log('Loading libraries...')
+    const response = await $fetch('/api/libraries')
+    console.log('API response:', response)
+    
+    // Check if response is an error object
+    if (response.error) {
+      throw new Error(response.message || 'Failed to load libraries')
     }
-  ],
-  createdAt: new Date('2024-01-01'),
-  updatedAt: new Date('2024-01-15')
+    
+    defaultLibrary.value = response.defaultLibrary
+    privateLibraries.value = response.privateLibraries || []
+  } catch (err) {
+    console.error('Failed to load libraries:', err)
+    error.value = err.message || 'Failed to load libraries'
+  } finally {
+    loading.value = false
+  }
+}
+
+// Load data on mount
+onMounted(() => {
+  loadLibraries()
 })
 
-const privateLibraries = ref([
-  {
-    id: 2,
-    name: 'Machine Learning',
-    userId: 1,
-    articles: [
-      {
-        id: 2,
-        articleTitle: 'Neural Networks in Computer Vision',
-        doi: '10.1109/CVPR.2024.12345',
-        readingStatus: ReadingStatus.READING_STATUS_TO_READ,
-        addedAt: new Date('2024-01-20'),
-        publicationYear: 2024
-      }
-    ],
-    createdAt: new Date('2024-01-10'),
-    updatedAt: new Date('2024-01-20')
-  },
-  {
-    id: 3,
-    name: 'Natural Language Processing',
-    userId: 1,
-    articles: [],
-    createdAt: new Date('2024-01-25'),
-    updatedAt: new Date('2024-01-25')
-  }
-])
-
 // Computed properties
-const totalLibraries = computed(() => 1 + privateLibraries.value.length)
+const totalLibraries = computed(() => {
+  if (!defaultLibrary.value) return 0
+  return 1 + (privateLibraries.value?.length || 0)
+})
 
 const totalArticles = computed(() => {
-  const defaultCount = defaultLibrary.value.articles.length
-  const privateCount = privateLibraries.value.reduce((sum, lib) => sum + lib.articles.length, 0)
+  if (!defaultLibrary.value) return 0
+  const defaultCount = defaultLibrary.value.articles?.length || 0
+  const privateCount = privateLibraries.value?.reduce((sum, lib) => sum + (lib.articles?.length || 0), 0) || 0
   return defaultCount + privateCount
 })
 
 const completedArticles = computed(() => {
+  if (!defaultLibrary.value) return 0
   const allArticles = [
-    ...defaultLibrary.value.articles,
-    ...privateLibraries.value.flatMap(lib => lib.articles)
+    ...(defaultLibrary.value.articles || []),
+    ...(privateLibraries.value?.flatMap(lib => lib.articles || []) || [])
   ]
-  return allArticles.filter(article => 
+  return allArticles.filter(article =>
     article.readingStatus === ReadingStatus.READING_STATUS_READ
   ).length
 })
@@ -226,42 +242,35 @@ const deleteLibrary = (library) => {
   showDeleteConfirm.value = true
 }
 
+const handleLibraryCreated = async (libraryData) => {
+  showCreateModal.value = false
+  showSuccess('Library created successfully!')
+  await loadLibraries() // Reload the libraries to get fresh data
+}
+
+const handleLibraryUpdated = async (libraryData) => {
+  showEditModal.value = false
+  showSuccess('Library updated successfully!')
+  await loadLibraries() // Reload the libraries to get fresh data
+}
+
 const confirmDelete = async () => {
   try {
-    // Mock API call
-    await new Promise(resolve => setTimeout(resolve, 500))
+    const response = await $fetch(`/api/libraries/${deletingLibrary.value.id}`, {
+      method: 'DELETE'
+    })
     
-    const index = privateLibraries.value.findIndex(lib => lib.id === deletingLibrary.value.id)
-    if (index > -1) {
-      privateLibraries.value.splice(index, 1)
+    if (response.success) {
+      showSuccess('Library deleted successfully!')
+      await loadLibraries() // Reload the libraries
     }
-    
-    showSuccess(`Library "${deletingLibrary.value.name}" deleted successfully`)
-  } catch (error) {
-    showError('Failed to delete library. Please try again.')
+  } catch (err) {
+    console.error('Failed to delete library:', err)
+    showError(err.message || 'Failed to delete library')
   } finally {
     showDeleteConfirm.value = false
     deletingLibrary.value = null
   }
-}
-
-const handleLibraryCreated = (newLibrary) => {
-  privateLibraries.value.push(newLibrary)
-  showCreateModal.value = false
-  showSuccess('Library created successfully!')
-}
-
-const handleLibraryUpdated = (updatedLibrary) => {
-  if (updatedLibrary.id === defaultLibrary.value.id) {
-    defaultLibrary.value = { ...defaultLibrary.value, ...updatedLibrary }
-  } else {
-    const index = privateLibraries.value.findIndex(lib => lib.id === updatedLibrary.id)
-    if (index > -1) {
-      privateLibraries.value[index] = { ...privateLibraries.value[index], ...updatedLibrary }
-    }
-  }
-  showEditModal.value = false
-  showSuccess('Library updated successfully!')
 }
 
 const handleArticleSelected = (article) => {

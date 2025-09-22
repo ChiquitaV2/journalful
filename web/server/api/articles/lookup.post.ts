@@ -6,65 +6,64 @@ import {
 } from "~~/server/proto/grpc/articles/v1/article";
 
 export default defineEventHandler(async (event) => {
-  const body = await readBody(event)
-  const { doi } = body
-    console.log(body)
-    const session = await requireUserSession(event)
-    console.log(session)
-
-  if (!doi) {
-    throw createError({
-      statusCode: 400,
-      statusMessage: 'DOI is required'
-    })
-  }
-
-  const articlesSvr = await useServices().getArticlesServiceClient(event)
   try {
-    return await articlesSvr.GetArticleByDOI(GetArticleByDOIRequest.fromJSON({doi}))
-  } catch (e: any) {
-    console.error("lookup error", e)
-    // For all errors besdies not found return the error
-    if (!e.message.includes("not found")) {
-      return createError({
-        statusCode: 500,
-        statusMessage: e.message
+    const body = await readBody(event)
+    const { doi } = body
+    
+    const session = await requireUserSession(event)
+
+    if (!doi) {
+      throw createError({
+        statusCode: 400,
+        statusMessage: 'DOI is required'
       })
     }
-  }
-  // If an article is not found, we attempt to add it to the service based on doi
-  try {
-    const cratedArticle = await articlesSvr.CreateArticle(CreateArticleRequest.fromJSON({doi}))
-    return await articlesSvr.GetArticle(GetArticleRequest.fromJSON({id: cratedArticle.id}))
-  } catch (e: any) {
-    return createError({
-      statusCode: 404,
-      statusMessage: "Article dose not exist"
-    })
-  }
-  // Simulate API delay
-  await new Promise(resolve => setTimeout(resolve, 1000))
 
-  // Mock DOI lookup - in reality this would call CrossRef API
-  if (doi.includes('10.')) {
-    return {
-      success: true,
-      article: {
-        doi,
-        title: 'Advances in Machine Learning for Academic Research',
-        authors: [
-          { id: 1, name: 'Dr. Jane Smith', profileId: 1 },
-          { id: 2, name: 'Prof. John Doe', profileId: 2 }
-        ],
-        publicationYear: 2024,
-        journalName: 'Nature Machine Intelligence',
-        abstract: 'This paper presents novel approaches to machine learning applications in academic research, focusing on automated literature analysis and citation pattern recognition.'
+    const articlesSvr = await useServices().getArticlesServiceClient(event)
+    
+    // Try to find existing article by DOI
+    try {
+      const response = await articlesSvr.GetArticleByDOI(GetArticleByDOIRequest.fromJSON({doi}))
+      return {
+        success: true,
+        article: response.article
+      }
+    } catch (e: any) {
+      console.error("lookup error", e)
+      // For all errors besides not found, return the error
+      if (!e.message.includes("not found")) {
+        throw createError({
+          statusCode: 500,
+          statusMessage: e.message
+        })
       }
     }
-  } else {
+    
+    // If article is not found, attempt to create it based on DOI
+    try {
+      const createdArticle = await articlesSvr.CreateArticle(CreateArticleRequest.fromJSON({
+        doi,
+        title: `Article with DOI: ${doi}`, // Backend should fetch metadata
+        authors: []
+      }))
+      
+      const response = await articlesSvr.GetArticle(GetArticleRequest.fromJSON({id: createdArticle.id}))
+      return {
+        success: true,
+        article: response.article
+      }
+    } catch (e: any) {
+      console.error("creation error", e)
+      throw createError({
+        statusCode: 404,
+        statusMessage: "Article does not exist and could not be created"
+      })
+    }
+  } catch (error: any) {
+    console.error("Article lookup error:", error)
     throw createError({
-      statusCode: 404,
-      statusMessage: 'Article not found for the provided DOI'
+      statusCode: error.statusCode || 500,
+      statusMessage: error.message || "Failed to lookup article"
     })
   }
 })

@@ -19,6 +19,7 @@ message Article {
   optional string journal_name = 8;
   google.protobuf.Timestamp created_at = 9;
   google.protobuf.Timestamp updated_at = 10;
+  repeated string tags = 11; // New field for article tags
 }
 
 service ArticlesService {

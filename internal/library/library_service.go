@@ -3,15 +3,20 @@ package library
 import (
 	"context"
 	"database/sql"
+	"log/slog"
+
 	"github.com/chiquitav2/journalful/internal/db"
 	"github.com/chiquitav2/journalful/pkg/library/v1"
 	"google.golang.org/protobuf/types/known/timestamppb"
-	"log/slog"
 )
 
 type LibraryServiceInterface interface {
 	SaveArticleToLibrary(ctx context.Context, request *library.SaveArticleToLibraryRequest) (*library.SaveArticleToLibraryResponse, error)
 	GetUserLibrary(ctx context.Context, request *library.GetUserLibraryRequest) (*library.GetUserLibraryResponse, error)
+	GetLibrary(ctx context.Context, request *library.GetLibraryRequest) (*library.GetLibraryResponse, error)
+	CreateLibrary(ctx context.Context, request *library.CreateLibraryRequest) (*library.CreateLibraryResponse, error)
+	UpdateLibrary(ctx context.Context, request *library.UpdateLibraryRequest) (*library.UpdateLibraryResponse, error)
+	DeleteLibrary(ctx context.Context, request *library.DeleteLibraryRequest) (*library.DeleteLibraryResponse, error)
 }
 type LibraryService struct {
 	repo *db.Queries
@@ -144,5 +149,111 @@ func (s *LibraryService) buildLibrary(ctx context.Context, lib db.Library) (*lib
 		Articles:    libraryArticles,
 		CreatedAt:   timestamppb.New(lib.CreatedAt.Time),
 		UpdatedAt:   timestamppb.New(lib.UpdatedAt.Time),
+	}, nil
+}
+
+func (s *LibraryService) GetLibrary(ctx context.Context, request *library.GetLibraryRequest) (*library.GetLibraryResponse, error) {
+	lib, err := s.repo.GetLibrary(ctx, request.LibraryId)
+	if err != nil {
+		return nil, err
+	}
+
+	builtLib, err := s.buildLibrary(ctx, lib)
+	if err != nil {
+		return nil, err
+	}
+
+	return &library.GetLibraryResponse{
+		Library: builtLib,
+	}, nil
+}
+
+func (s *LibraryService) CreateLibrary(ctx context.Context, request *library.CreateLibraryRequest) (*library.CreateLibraryResponse, error) {
+	result, err := s.repo.CreateLibrary(ctx, db.CreateLibraryParams{
+		OwnerID: request.OwnerId,
+		Name: sql.NullString{
+			String: request.Name,
+			Valid:  true,
+		},
+		Description: sql.NullString{
+			String: *request.Description,
+			Valid:  request.Description != nil,
+		},
+		Ispublic: sql.NullBool{
+			Bool:  request.IsPublic,
+			Valid: true,
+		},
+		Isdefault: sql.NullBool{
+			Bool:  false, // New libraries are not default
+			Valid: true,
+		},
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	id, err := result.LastInsertId()
+	if err != nil {
+		return nil, err
+	}
+
+	return &library.CreateLibraryResponse{
+		LibraryId: id,
+	}, nil
+}
+
+func (s *LibraryService) UpdateLibrary(ctx context.Context, request *library.UpdateLibraryRequest) (*library.UpdateLibraryResponse, error) {
+	// Get current library to check ownership
+	_, err := s.repo.GetLibrary(ctx, request.LibraryId)
+	if err != nil {
+		return nil, err
+	}
+
+	// Update name if provided
+	if request.Name != nil {
+		err = s.repo.UpdateLibraryName(ctx, db.UpdateLibraryNameParams{
+			ID:   request.LibraryId,
+			Name: sql.NullString{String: *request.Name, Valid: true},
+		})
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	// Update description if provided
+	if request.Description != nil {
+		err = s.repo.UpdateLibraryDescription(ctx, db.UpdateLibraryDescriptionParams{
+			ID:          request.LibraryId,
+			Description: sql.NullString{String: *request.Description, Valid: true},
+		})
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	// Update visibility if provided
+	if request.IsPublic != nil {
+		err = s.repo.UpdateLibraryVisibility(ctx, db.UpdateLibraryVisibilityParams{
+			ID:       request.LibraryId,
+			Ispublic: sql.NullBool{Bool: *request.IsPublic, Valid: true},
+		})
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	return &library.UpdateLibraryResponse{
+		Success: true,
+	}, nil
+}
+
+func (s *LibraryService) DeleteLibrary(ctx context.Context, request *library.DeleteLibraryRequest) (*library.DeleteLibraryResponse, error) {
+	err := s.repo.DeleteLibrary(ctx, request.LibraryId)
+	if err != nil {
+		return nil, err
+	}
+
+	return &library.DeleteLibraryResponse{
+		Success: true,
 	}, nil
 }

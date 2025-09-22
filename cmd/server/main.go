@@ -11,8 +11,6 @@ import (
 
 var (
 	configPath = flag.String("config", "config.yaml", "path to config file")
-	certFile   = flag.String("cert", "testdata/certs/server.crt", "path to TLS certificate file")
-	keyFile    = flag.String("key", "testdata/certs/server.key", "path to TLS key file")
 )
 
 func main() {
@@ -30,7 +28,7 @@ func main() {
 
 	// Initialize the application with the loaded configuration
 
-	appSvr := app.NewApp(cfg, *certFile, *keyFile)
+	appSvr := app.NewApp(cfg)
 	err = appSvr.Init()
 	if err != nil {
 		slog.Error("Failed to initialize appSvr", "error", err)

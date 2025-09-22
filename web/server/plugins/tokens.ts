@@ -72,15 +72,13 @@ async function updateUserSession(
     })
 }
 
-// --- Main Plugin Logic ---
-
 export default defineNitroPlugin((nitroApp: NitroApp) => {
     nitroApp.hooks.hook('request', async (event) => {
         const url = getRequestURL(event)
 
         // We only want to run this logic for our own API routes.
         // Exclude auth routes to prevent an infinite loop during login/logout.
-        if (!url.pathname.startsWith('/api/') || url.pathname.startsWith('/api/auth/'))
+        if ( url.pathname.startsWith('/api/auth/'))
             return
 
         // --- 1. Get Config and Session ---

@@ -521,17 +521,30 @@ const addArticle = () => {
   // router.push(`/libraries/${library.value.id}/add-article`)
   showAddModal.value = true
 }
-const handleArticleAdded = (article) => {
-  //make a call to /api/libraries/{id}/articles
-  const response = $fetch(`/api/libraries/${library.value.id}/articles`, {
-    method: 'POST',
-    body: {
-      articleId: article.id
+const handleArticleAdded = async (article) => {
+  try {
+    // Add article to library via API
+    const response = await $fetch(`/api/libraries/${library.value.id}/articles`, {
+      method: 'POST',
+      body: {
+        articleId: article.id,
+        readingStatus: article.readingStatus || 'unread',
+        notes: article.notes || null
+      }
+    })
+    
+    if (response.success) {
+      // Update local state
+      library.value.articles.push(article)
+      library.value.articleCount = library.value.articles.length
+      
+      success('Article Added', 'Article has been added to your library.')
+      showAddModal.value = false
     }
-  })
-  library.value.articles.push(article)
-  library.value.articleCount = library.value.articles.length
-
+  } catch (err) {
+    console.error('Failed to add article to library:', err)
+    showError('Add Failed', 'Unable to add article to library. Please try again.')
+  }
 }
 const editLibrary = () => {
   router.push(`/libraries/${library.value.id}/edit`)

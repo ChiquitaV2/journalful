@@ -14,18 +14,14 @@ import (
 )
 
 type App struct {
-	grpcApi  api.ApiModule
-	db       *sql.DB
-	config   *conf.Config
-	certFile string
-	keyFile  string
+	grpcApi api.ApiModule
+	db      *sql.DB
+	config  *conf.Config
 }
 
-func NewApp(config *conf.Config, certFile, keyFile string) *App {
+func NewApp(config *conf.Config) *App {
 	return &App{
-		config:   config,
-		certFile: certFile,
-		keyFile:  keyFile,
+		config: config,
 	}
 }
 func (s *App) Init() error {
@@ -37,7 +33,7 @@ func (s *App) Init() error {
 	}
 	s.db = db
 
-	s.grpcApi = grpcapi.NewServer(s.db, s.config, s.certFile, s.keyFile)
+	s.grpcApi = grpcapi.NewServer(s.db, s.config)
 
 	if err := s.grpcApi.Register(); err != nil {
 		return fmt.Errorf("failed to register gRPC API: %w", err)

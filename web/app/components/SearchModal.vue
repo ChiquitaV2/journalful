@@ -244,36 +244,16 @@ const performSearch = async () => {
       }
     }
 
-    // Mock API call
-    await new Promise(resolve => setTimeout(resolve, 800))
+    // Call real search API
+    const data = await $fetch('/api/search', {
+      query: { q: searchQuery.value.trim() }
+    })
 
-    // Mock search results
-    searchResults.value = [
-      {
-        article: {
-          id: 1,
-          title: 'Deep Learning for Academic Research: A Comprehensive Survey',
-          authors: [{ name: 'Dr. Jane Smith' }, { name: 'Prof. John Doe' }],
-          publicationYear: 2024,
-          journalName: 'Nature Machine Intelligence',
-          readingStatus: ReadingStatus.READING_STATUS_TO_READ,
-          doi: '10.1038/s42256-024-00001-1'
-        },
-        inLibraries: [1, 2]
-      },
-      {
-        article: {
-          id: 2,
-          title: 'Advances in Neural Network Architectures',
-          authors: [{ name: 'Dr. Alice Johnson' }],
-          publicationYear: 2023,
-          journalName: 'Science',
-          readingStatus: ReadingStatus.READING_STATUS_READING,
-          doi: '10.1126/science.abc123'
-        },
-        inLibraries: [1]
-      }
-    ]
+    // Transform backend results to match component format
+    searchResults.value = (data?.results || []).map(article => ({
+      article,
+      inLibraries: [] // This would need to be fetched separately or included in the search response
+    }))
   } catch (error) {
     console.error('Search failed:', error)
   } finally {

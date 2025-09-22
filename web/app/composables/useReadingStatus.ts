@@ -47,13 +47,19 @@ export const useReadingStatus = () => {
   ]
 
   const updateArticleStatus = async (articleId: number, newStatus: ReadingStatus) => {
-    // Mock API call - replace with actual implementation
-    await new Promise(resolve => setTimeout(resolve, 300))
-    
-    // In a real app, this would make an API call
-    console.log(`Updating article ${articleId} to status ${newStatus}`)
-    
-    return { success: true }
+    try {
+      const response = await $fetch(`/api/articles/${articleId}`, {
+        method: 'PUT',
+        body: {
+          readingStatus: newStatus
+        }
+      })
+      
+      return { success: true }
+    } catch (error) {
+      console.error(`Failed to update article ${articleId} status:`, error)
+      return { success: false, error }
+    }
   }
 
   return {

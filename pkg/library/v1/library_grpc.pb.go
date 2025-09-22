@@ -2,7 +2,7 @@
 // versions:
 // - protoc-gen-go-grpc v1.5.1
 // - protoc             v6.32.0
-// source: library/v1/library.proto
+// source: api/library/v1/library.proto
 
 package library
 
@@ -21,6 +21,10 @@ const _ = grpc.SupportPackageIsVersion9
 const (
 	LibraryService_SaveArticleToLibrary_FullMethodName = "/api.library.v1.LibraryService/SaveArticleToLibrary"
 	LibraryService_GetUserLibrary_FullMethodName       = "/api.library.v1.LibraryService/GetUserLibrary"
+	LibraryService_GetLibrary_FullMethodName           = "/api.library.v1.LibraryService/GetLibrary"
+	LibraryService_CreateLibrary_FullMethodName        = "/api.library.v1.LibraryService/CreateLibrary"
+	LibraryService_UpdateLibrary_FullMethodName        = "/api.library.v1.LibraryService/UpdateLibrary"
+	LibraryService_DeleteLibrary_FullMethodName        = "/api.library.v1.LibraryService/DeleteLibrary"
 )
 
 // LibraryServiceClient is the client API for LibraryService service.
@@ -29,6 +33,10 @@ const (
 type LibraryServiceClient interface {
 	SaveArticleToLibrary(ctx context.Context, in *SaveArticleToLibraryRequest, opts ...grpc.CallOption) (*SaveArticleToLibraryResponse, error)
 	GetUserLibrary(ctx context.Context, in *GetUserLibraryRequest, opts ...grpc.CallOption) (*GetUserLibraryResponse, error)
+	GetLibrary(ctx context.Context, in *GetLibraryRequest, opts ...grpc.CallOption) (*GetLibraryResponse, error)
+	CreateLibrary(ctx context.Context, in *CreateLibraryRequest, opts ...grpc.CallOption) (*CreateLibraryResponse, error)
+	UpdateLibrary(ctx context.Context, in *UpdateLibraryRequest, opts ...grpc.CallOption) (*UpdateLibraryResponse, error)
+	DeleteLibrary(ctx context.Context, in *DeleteLibraryRequest, opts ...grpc.CallOption) (*DeleteLibraryResponse, error)
 }
 
 type libraryServiceClient struct {
@@ -59,12 +67,56 @@ func (c *libraryServiceClient) GetUserLibrary(ctx context.Context, in *GetUserLi
 	return out, nil
 }
 
+func (c *libraryServiceClient) GetLibrary(ctx context.Context, in *GetLibraryRequest, opts ...grpc.CallOption) (*GetLibraryResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(GetLibraryResponse)
+	err := c.cc.Invoke(ctx, LibraryService_GetLibrary_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *libraryServiceClient) CreateLibrary(ctx context.Context, in *CreateLibraryRequest, opts ...grpc.CallOption) (*CreateLibraryResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(CreateLibraryResponse)
+	err := c.cc.Invoke(ctx, LibraryService_CreateLibrary_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *libraryServiceClient) UpdateLibrary(ctx context.Context, in *UpdateLibraryRequest, opts ...grpc.CallOption) (*UpdateLibraryResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(UpdateLibraryResponse)
+	err := c.cc.Invoke(ctx, LibraryService_UpdateLibrary_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *libraryServiceClient) DeleteLibrary(ctx context.Context, in *DeleteLibraryRequest, opts ...grpc.CallOption) (*DeleteLibraryResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(DeleteLibraryResponse)
+	err := c.cc.Invoke(ctx, LibraryService_DeleteLibrary_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // LibraryServiceServer is the server API for LibraryService service.
 // All implementations must embed UnimplementedLibraryServiceServer
 // for forward compatibility.
 type LibraryServiceServer interface {
 	SaveArticleToLibrary(context.Context, *SaveArticleToLibraryRequest) (*SaveArticleToLibraryResponse, error)
 	GetUserLibrary(context.Context, *GetUserLibraryRequest) (*GetUserLibraryResponse, error)
+	GetLibrary(context.Context, *GetLibraryRequest) (*GetLibraryResponse, error)
+	CreateLibrary(context.Context, *CreateLibraryRequest) (*CreateLibraryResponse, error)
+	UpdateLibrary(context.Context, *UpdateLibraryRequest) (*UpdateLibraryResponse, error)
+	DeleteLibrary(context.Context, *DeleteLibraryRequest) (*DeleteLibraryResponse, error)
 	mustEmbedUnimplementedLibraryServiceServer()
 }
 
@@ -80,6 +132,18 @@ func (UnimplementedLibraryServiceServer) SaveArticleToLibrary(context.Context, *
 }
 func (UnimplementedLibraryServiceServer) GetUserLibrary(context.Context, *GetUserLibraryRequest) (*GetUserLibraryResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetUserLibrary not implemented")
+}
+func (UnimplementedLibraryServiceServer) GetLibrary(context.Context, *GetLibraryRequest) (*GetLibraryResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetLibrary not implemented")
+}
+func (UnimplementedLibraryServiceServer) CreateLibrary(context.Context, *CreateLibraryRequest) (*CreateLibraryResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method CreateLibrary not implemented")
+}
+func (UnimplementedLibraryServiceServer) UpdateLibrary(context.Context, *UpdateLibraryRequest) (*UpdateLibraryResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method UpdateLibrary not implemented")
+}
+func (UnimplementedLibraryServiceServer) DeleteLibrary(context.Context, *DeleteLibraryRequest) (*DeleteLibraryResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method DeleteLibrary not implemented")
 }
 func (UnimplementedLibraryServiceServer) mustEmbedUnimplementedLibraryServiceServer() {}
 func (UnimplementedLibraryServiceServer) testEmbeddedByValue()                        {}
@@ -138,6 +202,78 @@ func _LibraryService_GetUserLibrary_Handler(srv interface{}, ctx context.Context
 	return interceptor(ctx, in, info, handler)
 }
 
+func _LibraryService_GetLibrary_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetLibraryRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(LibraryServiceServer).GetLibrary(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: LibraryService_GetLibrary_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(LibraryServiceServer).GetLibrary(ctx, req.(*GetLibraryRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _LibraryService_CreateLibrary_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(CreateLibraryRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(LibraryServiceServer).CreateLibrary(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: LibraryService_CreateLibrary_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(LibraryServiceServer).CreateLibrary(ctx, req.(*CreateLibraryRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _LibraryService_UpdateLibrary_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(UpdateLibraryRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(LibraryServiceServer).UpdateLibrary(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: LibraryService_UpdateLibrary_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(LibraryServiceServer).UpdateLibrary(ctx, req.(*UpdateLibraryRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _LibraryService_DeleteLibrary_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(DeleteLibraryRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(LibraryServiceServer).DeleteLibrary(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: LibraryService_DeleteLibrary_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(LibraryServiceServer).DeleteLibrary(ctx, req.(*DeleteLibraryRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // LibraryService_ServiceDesc is the grpc.ServiceDesc for LibraryService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -153,7 +289,23 @@ var LibraryService_ServiceDesc = grpc.ServiceDesc{
 			MethodName: "GetUserLibrary",
 			Handler:    _LibraryService_GetUserLibrary_Handler,
 		},
+		{
+			MethodName: "GetLibrary",
+			Handler:    _LibraryService_GetLibrary_Handler,
+		},
+		{
+			MethodName: "CreateLibrary",
+			Handler:    _LibraryService_CreateLibrary_Handler,
+		},
+		{
+			MethodName: "UpdateLibrary",
+			Handler:    _LibraryService_UpdateLibrary_Handler,
+		},
+		{
+			MethodName: "DeleteLibrary",
+			Handler:    _LibraryService_DeleteLibrary_Handler,
+		},
 	},
 	Streams:  []grpc.StreamDesc{},
-	Metadata: "library/v1/library.proto",
+	Metadata: "api/library/v1/library.proto",
 }

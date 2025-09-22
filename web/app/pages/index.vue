@@ -107,6 +107,7 @@ definePageMeta({
 useLayout().setLayoutConfig()
 // Composables
 const { formatCount } = useFormatters()
+const { showWelcomeGuide, isNewUser, checkIfNewUser } = useOnboarding()
 
 // Mock data - replace with real API calls
 const stats = ref({
@@ -120,6 +121,18 @@ const recentArticles = ref([])
 
 const showAddArticleModal = ref(false)
 const doiSearch = ref('')
+
+// Check for new user and show welcome if needed
+onMounted(async () => {
+  await checkIfNewUser()
+  
+  if (isNewUser.value) {
+    // Show welcome message after a short delay
+    setTimeout(() => {
+      showWelcomeGuide()
+    }, 1000)
+  }
+})
 
 // Set page title
 useHead({

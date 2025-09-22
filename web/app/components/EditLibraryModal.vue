@@ -225,8 +225,15 @@ const updateLibrary = async () => {
   isUpdating.value = true
 
   try {
-    // Mock API call
-    await new Promise(resolve => setTimeout(resolve, 1000))
+    // Call actual API endpoint
+    const response = await $fetch(`/api/libraries/${props.library.id}`, {
+      method: 'PUT',
+      body: {
+        name: libraryName.value.trim(),
+        description: description.value.trim() || null,
+        isPublic: !isPrivate.value // Backend expects isPublic, frontend uses isPrivate
+      }
+    })
 
     const updatedLibrary = {
       ...props.library,
@@ -240,6 +247,7 @@ const updateLibrary = async () => {
     emit('library-updated', updatedLibrary)
     showSuccess('Library updated successfully!')
   } catch (error) {
+    console.error('Library update error:', error)
     showError('Failed to update library. Please try again.')
   } finally {
     isUpdating.value = false

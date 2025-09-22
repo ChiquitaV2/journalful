@@ -4,6 +4,9 @@ server:
 database:
   host: localhost
   port: 3306
-  user: user
-  password: password
-  name: database
+  user: service
+  password: service_password
+  name: journalful
+zitadel:
+  domain: "localhost:8080"
+  keyPath: "key.json"

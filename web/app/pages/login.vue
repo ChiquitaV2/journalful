@@ -31,12 +31,6 @@
           >
             Log out
           </button>
-          <button
-              @click="test"
-              class="glass-button glass-button-primary"
-          >
-            Test
-          </button>
         </div>
       </div>
     </div>
@@ -51,16 +45,11 @@ definePageMeta({
   public: true
 })
 
-const test = async () => {
-  const {data} = await useFetch('/api/libraries/1')
-  console.log("data", data.value)
-}
-
 onMounted(async () => {
   await fetch()
-  console.log("session", session.value)
-  console.log("user", user.value)
-  console.log("loggedIn", loggedIn.value)
+  if (loggedIn.value) {
+    await navigateTo('/')
+  }
 })
 </script>
 

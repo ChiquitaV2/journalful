@@ -12,12 +12,14 @@ message Article {
   int64 id = 1;
   string doi = 2;
   string title = 3;
-  repeated profile.v1.Author authors = 4; // List of authors
-  optional string abstract = 5;
-  optional int32 publication_year = 6;
-  optional string journal_name = 7;
-  google.protobuf.Timestamp created_at = 8;
-  google.protobuf.Timestamp updated_at = 9;
+  string url =4;
+  repeated profile.v1.Author authors = 5; // List of authors
+  optional string abstract = 6;
+  optional int32 publication_year = 7;
+  optional string journal_name = 8;
+  google.protobuf.Timestamp created_at = 9;
+  google.protobuf.Timestamp updated_at = 10;
+  repeated string tags = 11; // New field for article tags
 }
 
 service ArticlesService {

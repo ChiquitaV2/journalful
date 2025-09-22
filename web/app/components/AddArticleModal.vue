@@ -263,27 +263,10 @@ const search = async () => {
   searchResult.value = null
   
   try {
-    // Mock API call - replace with actual API
-    // await new Promise(resolve => setTimeout(resolve, 1000))
     searchResult.value = (await searchByDOI(doiSearch.value)).article
-
-    // Mock successful search result
-    // if (doiSearch.value.includes('10.')) {
-    //   searchResult.value = {
-    //     id: Date.now(),
-    //     title: 'Advances in Machine Learning for Academic Research',
-    //     doi: doiSearch.value,
-    //     authors: [
-    //       { id: 1, name: 'Dr. Jane Smith', profileId: 1 },
-    //       { id: 2, name: 'Prof. John Doe', profileId: 2 }
-    //     ],
-    //     publicationYear: 2024,
-    //     journalName: 'Nature Machine Intelligence',
-    //     abstract: 'This paper presents novel approaches to machine learning applications in academic research...'
-    //   }
-    // }
   } catch (error) {
-    showError('Failed to search for article. Please try again.')
+    console.error('DOI search error:', error)
+    showError('Failed to search for article. Please check the DOI and try again.')
   } finally {
     isSearching.value = false
   }
@@ -291,12 +274,11 @@ const search = async () => {
 
 const addSearchedArticle = async () => {
   try {
-    // Mock API call to add article
-    await new Promise(resolve => setTimeout(resolve, 500))
-    
+    // The article is already fetched/created by searchByDOI
     emit('article-added', searchResult.value)
     showSuccess('Article added successfully!')
   } catch (error) {
+    console.error('Add article error:', error)
     showError('Failed to add article. Please try again.')
   }
 }
@@ -311,22 +293,41 @@ const addManualArticle = async () => {
       return
     }
     
-    // Mock API call to add article
-    await new Promise(resolve => setTimeout(resolve, 1000))
-    
-    // Transform authors string to array
+    // Transform authors string to array for API call
     const authorsArray = manualArticle.value.authors
-      ? manualArticle.value.authors.split(',').map((name, index) => ({
-          id: Date.now() + index,
-          name: name.trim(),
-          profileId: 0
-        }))
+      ? manualArticle.value.authors.split(',').map(name => name.trim())
       : []
     
+    // Call real API endpoint to create article
+    const response = await $fetch('/api/articles', {
+      method: 'POST',
+      body: {
+        doi: manualArticle.value.doi.trim(),
+        title: manualArticle.value.title.trim(),
+        authors: authorsArray,
+        abstract: manualArticle.value.abstract.trim() || null,
+        publicationYear: manualArticle.value.publicationYear || null,
+        journalName: manualArticle.value.journalName.trim() || null
+      }
+    })
+    
+    // Transform authors array for display
+    const authorsForDisplay = authorsArray.map((name, index) => ({
+      id: Date.now() + index,
+      name: name,
+      profileId: 0
+    }))
+    
     const newArticle = {
-      id: Date.now(),
-      ...manualArticle.value,
-      authors: authorsArray,
+      id: response.id,
+      doi: manualArticle.value.doi.trim(),
+      title: manualArticle.value.title.trim(),
+      authors: authorsForDisplay,
+      abstract: manualArticle.value.abstract.trim() || null,
+      publicationYear: manualArticle.value.publicationYear || null,
+      journalName: manualArticle.value.journalName.trim() || null,
+      readingStatus: manualArticle.value.readingStatus,
+      notes: manualArticle.value.notes.trim() || null,
       createdAt: new Date(),
       updatedAt: new Date()
     }
@@ -334,6 +335,7 @@ const addManualArticle = async () => {
     emit('article-added', newArticle)
     showSuccess('Article added successfully!')
   } catch (error) {
+    console.error('Manual article creation error:', error)
     showError('Failed to add article. Please try again.')
   } finally {
     isAdding.value = false

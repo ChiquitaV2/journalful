@@ -201,14 +201,20 @@ const createLibrary = async () => {
   isCreating.value = true
   
   try {
-    // Mock API call
-    await new Promise(resolve => setTimeout(resolve, 1000))
+    // Call actual API endpoint
+    const response = await $fetch('/api/libraries', {
+      method: 'POST',
+      body: {
+        name: libraryName.value.trim(),
+        description: description.value.trim() || null,
+        isPublic: !isPrivate.value // Backend expects isPublic, frontend uses isPrivate
+      }
+    })
     
     const newLibrary = {
-      id: Date.now(),
+      id: response.id,
       name: libraryName.value.trim(),
       description: description.value.trim(),
-      userId: 1, // Mock user ID
       isPrivate: isPrivate.value,
       tags: tags.value,
       articles: [],
@@ -219,6 +225,7 @@ const createLibrary = async () => {
     emit('library-created', newLibrary)
     showSuccess('Library created successfully!')
   } catch (error) {
+    console.error('Library creation error:', error)
     showError('Failed to create library. Please try again.')
   } finally {
     isCreating.value = false

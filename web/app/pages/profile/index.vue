@@ -240,15 +240,19 @@ const { showSuccess, showError } = useNotifications()
 // State
 const isEditing = ref(false)
 const isSaving = ref(false)
+const isLoading = ref(true)
 
-
-// Mock profile data
-const profile = ref({
-  id: 1,
-  name: 'Dr. Sarah Johnson',
-  bio: 'Computer Science researcher focusing on machine learning and artificial intelligence. Currently pursuing PhD at Stanford University.',
-  institution: 'Stanford University',
-  createdAt: new Date('2023-01-15')
+// Profile data from API
+const profile = ref(null)
+const stats = ref({
+  total: 0,
+  toRead: 0,
+  reading: 0,
+  completed: 0,
+  abandoned: 0,
+  defaultLibraryCount: 0,
+  privateLibraryCount: 0,
+  privateArticleCount: 0
 })
 
 const editForm = ref({
@@ -257,17 +261,36 @@ const editForm = ref({
   institution: ''
 })
 
-// Mock statistics
-const stats = ref({
-  total: 42,
-  toRead: 15,
-  reading: 8,
-  completed: 17,
-  abandoned: 2,
-  defaultLibraryCount: 25,
-  privateLibraryCount: 3,
-  privateArticleCount: 17
-})
+// Load profile data
+const loadProfile = async () => {
+  try {
+    const profileData = await $fetch('/api/profile/me')
+    profile.value = profileData
+    
+    // Load profile statistics
+    const librariesData = await $fetch('/api/libraries')
+    const articlesData = await $fetch('/api/articles')
+    
+    stats.value = {
+      total: articlesData.length || 0,
+      toRead: articlesData.filter(a => a.readingStatus === 'READING_STATUS_TO_READ').length || 0,
+      reading: articlesData.filter(a => a.readingStatus === 'READING_STATUS_READING').length || 0,
+      completed: articlesData.filter(a => a.readingStatus === 'READING_STATUS_READ').length || 0,
+      abandoned: articlesData.filter(a => a.readingStatus === 'READING_STATUS_ABANDONED').length || 0,
+      defaultLibraryCount: librariesData.defaultLibrary?.articles?.length || 0,
+      privateLibraryCount: librariesData.privateLibraries?.length || 0,
+      privateArticleCount: librariesData.privateLibraries?.reduce((sum, lib) => sum + (lib.articles?.length || 0), 0) || 0
+    }
+  } catch (error) {
+    console.error('Failed to load profile:', error)
+    // Handle case where profile doesn't exist yet
+    if (error.statusCode === 404) {
+      profile.value = null
+    }
+  } finally {
+    isLoading.value = false
+  }
+}
 
 // Mock recent activity
 const recentActivity = ref([
@@ -338,22 +361,36 @@ const saveProfile = async () => {
   isSaving.value = true
   
   try {
-    // Mock API call
-    await new Promise(resolve => setTimeout(resolve, 1000))
-    
-    // Update profile
-    profile.value = {
-      ...profile.value,
-      name: editForm.value.name,
-      bio: editForm.value.bio,
-      institution: editForm.value.institution,
-      updatedAt: new Date()
+    if (profile.value) {
+      // Update existing profile
+      await $fetch(`/api/profile/${profile.value.id}`, {
+        method: 'PUT',
+        body: {
+          name: editForm.value.name,
+          bio: editForm.value.bio,
+          institution: editForm.value.institution
+        }
+      })
+    } else {
+      // Create new profile
+      const response = await $fetch('/api/profile', {
+        method: 'POST',
+        body: {
+          name: editForm.value.name,
+          bio: editForm.value.bio,
+          institution: editForm.value.institution
+        }
+      })
+      profile.value = { id: response.id, ...editForm.value }
     }
     
+    // Reload profile to get updated data
+    await loadProfile()
     isEditing.value = false
     showSuccess('Profile updated successfully!')
   } catch (error) {
-    showError('Failed to update profile. Please try again.')
+    console.error('Failed to save profile:', error)
+    showError('Failed to save profile. Please try again.')
   } finally {
     isSaving.value = false
   }
@@ -385,5 +422,10 @@ const formatRelativeTime = (date) => {
 // Set page title
 useHead({
   title: 'Profile - Academic Reading List Manager'
+})
+
+// Load profile on mount
+onMounted(() => {
+  loadProfile()
 })
 </script>

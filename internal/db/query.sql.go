@@ -350,6 +350,58 @@ func (q *Queries) GetLibraryArticle(ctx context.Context, arg GetLibraryArticlePa
 	return i, err
 }
 
+const getLibraryByID = `-- name: GetLibraryByID :one
+
+SELECT id, owner_id, name, description, ispublic, isdefault, created_at, updated_at FROM library WHERE id = ? LIMIT 1
+`
+
+// Additional library queries for CRUD operations
+func (q *Queries) GetLibraryByID(ctx context.Context, id int64) (Library, error) {
+	row := q.db.QueryRowContext(ctx, getLibraryByID, id)
+	var i Library
+	err := row.Scan(
+		&i.ID,
+		&i.OwnerID,
+		&i.Name,
+		&i.Description,
+		&i.Ispublic,
+		&i.Isdefault,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
+}
+
+const getLibraryWithArticles = `-- name: GetLibraryWithArticles :one
+SELECT 
+    l.id,
+    l.owner_id,
+    l.name,
+    l.description,
+    l.isPublic,
+    l.isDefault,
+    l.created_at,
+    l.updated_at
+FROM library l
+WHERE l.id = ? LIMIT 1
+`
+
+func (q *Queries) GetLibraryWithArticles(ctx context.Context, id int64) (Library, error) {
+	row := q.db.QueryRowContext(ctx, getLibraryWithArticles, id)
+	var i Library
+	err := row.Scan(
+		&i.ID,
+		&i.OwnerID,
+		&i.Name,
+		&i.Description,
+		&i.Ispublic,
+		&i.Isdefault,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
+}
+
 const getProfile = `-- name: GetProfile :one
 
 SELECT id, user_id, name, bio, institution, created_at, updated_at FROM profiles WHERE user_id = ? LIMIT 1
@@ -827,6 +879,48 @@ type UpdateLibraryArticleStatusParams struct {
 
 func (q *Queries) UpdateLibraryArticleStatus(ctx context.Context, arg UpdateLibraryArticleStatusParams) error {
 	_, err := q.db.ExecContext(ctx, updateLibraryArticleStatus, arg.ReadingStatus, arg.ID)
+	return err
+}
+
+const updateLibraryDescription = `-- name: UpdateLibraryDescription :exec
+UPDATE library SET description = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?
+`
+
+type UpdateLibraryDescriptionParams struct {
+	Description sql.NullString
+	ID          int64
+}
+
+func (q *Queries) UpdateLibraryDescription(ctx context.Context, arg UpdateLibraryDescriptionParams) error {
+	_, err := q.db.ExecContext(ctx, updateLibraryDescription, arg.Description, arg.ID)
+	return err
+}
+
+const updateLibraryName = `-- name: UpdateLibraryName :exec
+UPDATE library SET name = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?
+`
+
+type UpdateLibraryNameParams struct {
+	Name sql.NullString
+	ID   int64
+}
+
+func (q *Queries) UpdateLibraryName(ctx context.Context, arg UpdateLibraryNameParams) error {
+	_, err := q.db.ExecContext(ctx, updateLibraryName, arg.Name, arg.ID)
+	return err
+}
+
+const updateLibraryVisibility = `-- name: UpdateLibraryVisibility :exec
+UPDATE library SET isPublic = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?
+`
+
+type UpdateLibraryVisibilityParams struct {
+	Ispublic sql.NullBool
+	ID       int64
+}
+
+func (q *Queries) UpdateLibraryVisibility(ctx context.Context, arg UpdateLibraryVisibilityParams) error {
+	_, err := q.db.ExecContext(ctx, updateLibraryVisibility, arg.Ispublic, arg.ID)
 	return err
 }
 

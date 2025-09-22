@@ -161,3 +161,30 @@ UPDATE library_articles SET reading_status = ?, notes = ?, updated_at = CURRENT_
 
 -- name: DeleteSavedArticle :exec
 DELETE FROM library_articles WHERE id = ?;
+
+-- Additional library queries for CRUD operations
+
+-- name: GetLibraryByID :one
+SELECT * FROM library WHERE id = ? LIMIT 1;
+
+-- name: UpdateLibraryName :exec
+UPDATE library SET name = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?;
+
+-- name: UpdateLibraryDescription :exec
+UPDATE library SET description = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?;
+
+-- name: UpdateLibraryVisibility :exec
+UPDATE library SET isPublic = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?;
+
+-- name: GetLibraryWithArticles :one
+SELECT 
+    l.id,
+    l.owner_id,
+    l.name,
+    l.description,
+    l.isPublic,
+    l.isDefault,
+    l.created_at,
+    l.updated_at
+FROM library l
+WHERE l.id = ? LIMIT 1;

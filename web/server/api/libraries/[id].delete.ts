@@ -1,10 +1,11 @@
 import {useServices} from "~~/server/proto/useServices";
-import {GetLibraryRequest} from "~~/server/proto/grpc/library/v1/library";
+import {DeleteLibraryRequest} from "~~/server/proto/grpc/library/v1/library";
 
 export default defineEventHandler(async event => {
   try {
     const id = Number(event.context.params?.id)
     const session = await requireUserSession(event)
+    const librarySvr = await useServices().getLibraryServiceClient(event)
     
     if (!id) {
       throw createError({
@@ -12,13 +13,17 @@ export default defineEventHandler(async event => {
         statusMessage: 'Library ID is required'
       })
     }
-
-    const librarySvr = await useServices().getLibraryServiceClient(event)
     
-    const library = await librarySvr.GetLibrary(GetLibraryRequest.fromJSON({libraryId: id}))
-    return library.library
+    const result = await librarySvr.DeleteLibrary(DeleteLibraryRequest.fromJSON({
+      libraryId: id
+    }))
+    
+    return {
+      success: result.success,
+      id
+    }
   } catch (error: any) {
-    console.error("library fetch error", error)
+    console.error("library deletion error", error)
     if (error.message?.includes("not found")) {
       throw createError({
         statusCode: 404,
@@ -27,7 +32,7 @@ export default defineEventHandler(async event => {
     }
     throw createError({
       statusCode: error.statusCode || 500,
-      statusMessage: error.message || "Failed to fetch library"
+      statusMessage: error.message || "Failed to delete library"
     })
   }
 })
